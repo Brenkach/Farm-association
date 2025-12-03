@@ -1,0 +1,574 @@
+{% extends "base.html" %}
+{% block title %}Звіт та аналітика{% endblock %}
+
+{% block body %}
+<section class="section lynx-section">
+
+  <h1 class="h-title lynx-title">Звіт та аналітика</h1>
+  <p class="h-subtitle lynx-subtitle">
+    Огляд діяльності фермерських господарств, продукції, цін та працівників.
+  </p>
+
+  <!-- ================= USER PANEL ================= -->
+  <section class="card lynx-card" style="margin-bottom:16px;">
+    <div class="lynx-userpanel">
+      <div class="lynx-userbox">
+        <div class="lynx-subtitle">Кабінет користувача</div>
+        <div class="cell-strong">
+          {{ session.get('login') }} ({{ role }})
+        </div>
+        <div class="cell-muted lynx-small">
+          {% if role == 'superuser' %}
+            Ви маєте повний доступ.
+          {% elif role == 'farmer' %}
+            Ви бачите аналітику лише свого господарства.
+          {% elif role == 'worker' %}
+            Ви бачите лише дані свого господарства.
+          {% else %}
+            Доступ залежить від ролі.
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TABS ================= -->
+  <section class="card lynx-card" style="margin-bottom:16px;">
+    <h2 class="h-subtitle lynx-subtitle">Запити згідно з варіантом 40</h2>
+
+    <div class="report-tabs">
+
+      {% macro tab(label, code) %}
+        <a href="{{ url_for('report_producers') }}?tab={{ code }}"
+           class="report-tab {% if active_tab==code %}report-tab-active{% endif %}">
+          {{ label }}
+        </a>
+      {% endmacro %}
+
+      {{ tab("1. Виробники продукції", "q1") }}
+      {{ tab("2. Дозволи (3 міс.)", "q2") }}
+      {{ tab("3. За спеціалізацією", "q3") }}
+      {{ tab("4. Діяльність господарства", "q4") }}
+      {{ tab("5. Продукт у всіх", "q5") }}
+      {{ tab("6. Продукція виробника", "q6") }}
+      {{ tab("7. Найменша ціна", "q7") }}
+      {{ tab("8. Працівники", "q8") }}
+      {{ tab("9. Фінансовий рейтинг", "q9") }}
+      {{ tab("10. Квартали", "q10") }}
+
+    </div>
+  </section>
+
+  <!-- ================= Q1 ================= -->
+  {% if active_tab == 'q1' %}
+  <section class="card lynx-card">
+    <h2 class="h-subtitle lynx-subtitle">1. Виробники конкретного виду продукції</h2>
+
+    <form method="get" class="form-grid lynx-grid">
+      <input type="hidden" name="tab" value="q1">
+
+      <label class="form-label lynx-label">Продукт</label>
+      <select name="q1_product_type_id" class="select lynx-select">
+        <option value="">— Оберіть —</option>
+        {% for pt in ptypes %}
+          <option value="{{ pt.product_type_id }}"
+            {% if q1_product_type_id==pt.product_type_id %}selected{% endif %}>
+            {{ pt.product_name }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <div class="form-actions lynx-actions">
+        <button class="btn btn-primary lynx-btn-primary">Показати</button>
+      </div>
+    </form>
+
+    <div class="table-wrap lynx-table-wrap">
+      <table class="table lynx-table">
+        <thead>
+          <tr>
+            <th>Господарство</th>
+            <th>Регіон</th>
+            <th>Продукт</th>
+            <th>Од. виміру</th>
+            <th>Кількість</th>
+            <th>Ціна</th>
+            <th>Дата</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for farm, offer, pt in q1_rows %}
+          <tr>
+            <td class="cell-strong">{{ farm.name }}</td>
+            <td>{{ farm.region or "—" }}</td>
+            <td>{{ pt.product_name }}</td>
+            <td>{{ offer.uom }}</td>
+            <td>{{ offer.quantity_available or 0 }}</td>
+            <td>{{ offer.unit_price or "—" }}</td>
+            <td>{{ offer.produced_at }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="7" class="cell-empty">Немає даних.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ================= Q2 ================= -->
+  {% if active_tab == 'q2' %}
+  <section class="card lynx-card">
+    <h2 class="h-subtitle lynx-subtitle">2. Дозволи, що закінчуються через 3 місяці</h2>
+    <p class="cell-muted lynx-small">Період: {{ today }} — {{ cutoff_90 }}</p>
+
+    <div class="table-wrap lynx-table-wrap">
+      <table class="table lynx-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Господарство</th>
+            <th>Спеціалізація</th>
+            <th>Регіон</th>
+            <th>Видано</th>
+            <th>Діє до</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for f in q2_farms %}
+          <tr>
+            <td>{{ f.farm_id }}</td>
+            <td class="cell-strong">{{ f.name }}</td>
+            <td>{{ f.specialization.name }}</td>
+            <td>{{ f.region or "—" }}</td>
+            <td>{{ f.permit_issued_at }}</td>
+            <td>{{ f.permit_expires_at }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6" class="cell-empty">Немає господарств.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ================= Q3 ================= -->
+  {% if active_tab == 'q3' %}
+  <section class="card lynx-card">
+    <h2 class="h-subtitle lynx-subtitle">3. Господарства за спеціалізацією</h2>
+
+    <form method="get" class="form-grid lynx-grid">
+      <input type="hidden" name="tab" value="q3">
+
+      <label class="form-label lynx-label">Спеціалізація</label>
+      <select name="q3_specialization_id" class="select lynx-select">
+        <option value="">— Оберіть —</option>
+        {% for s in specs %}
+          <option value="{{ s.specialization_id }}"
+            {% if q3_spec_id==s.specialization_id %}selected{% endif %}>
+            {{ s.name }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <div class="form-actions lynx-actions">
+        <button class="btn btn-primary lynx-btn-primary">Показати</button>
+      </div>
+    </form>
+
+    <div class="table-wrap lynx-table-wrap">
+      <table class="table lynx-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Господарство</th>
+            <th>Фермер</th>
+            <th>Регіон</th>
+            <th>Телефон</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for f in q3_farms %}
+          <tr>
+            <td>{{ f.farm_id }}</td>
+            <td class="cell-strong">{{ f.name }}</td>
+            <td>{{ f.farmer_fullname or "—" }}</td>
+            <td>{{ f.region or "—" }}</td>
+            <td>{{ f.phone or "—" }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="5" class="cell-empty">Немає даних.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ================= Q4 ================= -->
+  {% if active_tab == 'q4' %}
+  <section class="card lynx-card">
+    <h2 class="h-subtitle lynx-subtitle">4. Діяльність господарства</h2>
+
+    <form method="get" class="form-grid lynx-grid">
+      <input type="hidden" name="tab" value="q4">
+
+      <label class="form-label lynx-label">Господарство</label>
+      <select name="q4_farm_id" class="select lynx-select">
+        <option value="">— Оберіть —</option>
+        {% for f in farms %}
+          <option value="{{ f.farm_id }}"
+            {% if q4_farm_id==f.farm_id %}selected{% endif %}>
+            {{ f.name }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <div class="form-actions lynx-actions">
+        <button class="btn btn-primary lynx-btn-primary">Показати</button>
+      </div>
+    </form>
+
+    {% if q4_farm %}
+    <div class="table-wrap lynx-table-wrap" style="margin-top:10px;">
+      <table class="table lynx-table">
+        <thead>
+          <tr>
+            <th>Продукт</th>
+            <th>Категорія</th>
+            <th>Од. виміру</th>
+            <th>Кількість</th>
+            <th>Ціна</th>
+            <th>Дата</th>
+            <th>Термін збер.</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for offer, pt in q4_offers %}
+          <tr>
+            <td>{{ pt.product_name }}</td>
+            <td>{{ pt.name }}</td>
+            <td>{{ offer.uom }}</td>
+            <td>{{ offer.quantity_available or 0 }}</td>
+            <td>{{ offer.unit_price or "—" }}</td>
+            <td>{{ offer.produced_at }}</td>
+            <td>{{ offer.shelf_life_days or "—" }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="7" class="cell-empty">Немає продукції.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <!-- ================= Q5 ================= -->
+  {% if active_tab == 'q5' %}
+  <section class="card lynx-card">
+    <h2 class="h-subtitle lynx-subtitle">5. Обраний продукт по всіх господарствах</h2>
+
+    <form method="get" class="form-grid lynx-grid">
+      <input type="hidden" name="tab" value="q5">
+
+      <label class="form-label lynx-label">Продукт</label>
+      <select name="q5_product_type_id" class="select lynx-select">
+        <option value="">— Оберіть —</option>
+        {% for pt in ptypes %}
+          <option value="{{ pt.product_type_id }}"
+            {% if q5_product_type_id==pt.product_type_id %}selected{% endif %}>
+            {{ pt.product_name }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <div class="form-actions lynx-actions">
+        <button class="btn btn-primary lynx-btn-primary">Показати</button>
+      </div>
+    </form>
+
+    {% if q5_agg %}
+    <div class="lynx-stats-row">
+      <div class="mini-stat">
+        <div class="mini-stat-label">Загальна кількість</div>
+        <div class="mini-stat-value">
+          {{ "%.2f"|format(q5_agg.total_qty or 0) }}
+        </div>
+      </div>
+
+      <div class="mini-stat">
+        <div class="mini-stat-label">Середня ціна</div>
+        <div class="mini-stat-value">
+          {% if q5_agg.avg_price %}
+            {{ "%.2f"|format(q5_agg.avg_price) }} грн
+          {% else %}—{% endif %}
+        </div>
+      </div>
+
+      <div class="mini-stat">
+        <div class="mini-stat-label">Оціночна вартість</div>
+        <div class="mini-stat-value">
+          {{ "%.2f"|format(q5_agg.total_value or 0) }} грн
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="table-wrap lynx-table-wrap">
+      <table class="table lynx-table">
+        <thead>
+          <tr>
+            <th>Господарство</th>
+            <th>Регіон</th>
+            <th>Кількість</th>
+            <th>Ціна</th>
+            <th>Дата</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for farm, offer, pt in q5_rows %}
+          <tr>
+            <td class="cell-strong">{{ farm.name }}</td>
+            <td>{{ farm.region or "—" }}</td>
+            <td>{{ offer.quantity_available or 0 }}</td>
+            <td>{{ offer.unit_price or "—" }}</td>
+            <td>{{ offer.produced_at }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="5" class="cell-empty">Немає даних.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ================= Q6 ================= -->
+  {% if active_tab == 'q6' %}
+  <section class="card lynx-card">
+    <h2 class="h-subtitle lynx-subtitle">6. Види продукції конкретного виробника</h2>
+
+    <form method="get" class="form-grid lynx-grid">
+      <input type="hidden" name="tab" value="q6">
+
+      <label class="form-label lynx-label">Господарство</label>
+      <select name="q6_farm_id" class="select lynx-select">
+        <option value="">— Оберіть —</option>
+        {% for f in farms %}
+          <option value="{{ f.farm_id }}"
+            {% if q6_farm_id==f.farm_id %}selected{% endif %}>
+            {{ f.name }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <div class="form-actions lynx-actions">
+        <button class="btn btn-primary lynx-btn-primary">Показати</button>
+      </div>
+    </form>
+
+    <div class="table-wrap lynx-table-wrap">
+      <table class="table lynx-table">
+        <thead>
+        <tr>
+          <th>ID</th>
+          <th>Категорія</th>
+          <th>Продукт</th>
+          <th>Спеціалізація</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for pt in q6_rows %}
+          <tr>
+            <td>{{ pt.product_type_id }}</td>
+            <td>{{ pt.name }}</td>
+            <td class="cell-strong">{{ pt.product_name }}</td>
+            <td>{{ pt.specialization.name }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="4" class="cell-empty">Немає даних.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ================= Q7 ================= -->
+  {% if active_tab == 'q7' %}
+  <section class="card lynx-card">
+    <h2 class="h-subtitle lynx-subtitle">7. Продукція з найменшою ціною</h2>
+
+    <form method="get" class="form-grid lynx-grid">
+      <input type="hidden" name="tab" value="q7">
+
+      <label class="form-label lynx-label">Продукт</label>
+      <select name="q7_product_type_id" class="select lynx-select">
+        <option value="">— Оберіть —</option>
+        {% for pt in ptypes %}
+          <option value="{{ pt.product_type_id }}"
+            {% if q7_product_type_id==pt.product_type_id %}selected{% endif %}>
+            {{ pt.product_name }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <div class="form-actions lynx-actions">
+        <button class="btn btn-primary lynx-btn-primary">Показати</button>
+      </div>
+    </form>
+
+    {% if q7_min_offer %}
+      <p class="cell-muted lynx-small">
+        Мінімальна ціна: <b>{{ q7_min_offer[0].unit_price }}</b> грн
+      </p>
+    {% endif %}
+
+    <div class="table-wrap lynx-table-wrap">
+      <table class="table lynx-table">
+        <thead>
+        <tr>
+          <th>Господарство</th>
+          <th>Регіон</th>
+          <th>Ціна</th>
+          <th>Кількість</th>
+          <th>Дата</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for offer, farm, pt in q7_offers_same_price %}
+          <tr>
+            <td>{{ farm.name }}</td>
+            <td>{{ farm.region or "—" }}</td>
+            <td>{{ offer.unit_price }}</td>
+            <td>{{ offer.quantity_available or 0 }}</td>
+            <td>{{ offer.produced_at }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="5" class="cell-empty">Немає даних.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ================= Q8 ================= -->
+  {% if active_tab == 'q8' %}
+  <section class="card lynx-card">
+    <h2 class="h-subtitle lynx-subtitle">8. Працівники конкретного господарства</h2>
+
+    <form method="get" class="form-grid lynx-grid">
+      <input type="hidden" name="tab" value="q8">
+
+      <label class="form-label lynx-label">Господарство</label>
+      <select name="q8_farm_id" class="select lynx-select">
+        <option value="">— Оберіть —</option>
+        {% for f in farms %}
+          <option value="{{ f.farm_id }}"
+            {% if q8_farm_id==f.farm_id %}selected{% endif %}>
+            {{ f.name }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <div class="form-actions lynx-actions">
+        <button class="btn btn-primary lynx-btn-primary">Показати</button>
+      </div>
+    </form>
+
+    <div class="table-wrap lynx-table-wrap">
+      <table class="table lynx-table">
+        <thead>
+          <tr>
+            <th>ПІБ</th>
+            <th>Посада</th>
+            <th>Дата найму</th>
+            <th>Оклад</th>
+            <th>Адреса</th>
+            <th>Телефон</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for e in q8_employees %}
+          <tr>
+            <td class="cell-strong">{{ e.full_name }}</td>
+            <td>{{ e.position }}</td>
+            <td>{{ e.hire_date }}</td>
+            <td>{{ e.monthly_salary or "—" }}</td>
+            <td>{{ e.address or "—" }}</td>
+            <td>{{ e.phone or "—" }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6" class="cell-empty">Немає даних.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ================= Q9 ================= -->
+  {% if active_tab == 'q9' %}
+  <section class="card lynx-card">
+    <h2 class="h-subtitle lynx-subtitle">9. Фінансовий стан господарств</h2>
+
+    <div class="table-wrap lynx-table-wrap">
+      <table class="table lynx-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Господарство</th>
+            <th>Кількість</th>
+            <th>Прибуток</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for row in q9_rows %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td class="cell-strong">{{ row.name }}</td>
+            <td>{{ "%.2f"|format(row.total_qty or 0) }}</td>
+            <td>{{ "%.2f"|format(row.total_value or 0) }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="4" class="cell-empty">Немає даних.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ================= Q10 ================= -->
+  {% if active_tab == 'q10' %}
+  <section class="card lynx-card">
+    <h2 class="h-subtitle lynx-subtitle">10. Прибуток за кварталами</h2>
+
+    <div class="table-wrap lynx-table-wrap">
+      <table class="table lynx-table">
+        <thead>
+          <tr>
+            <th>Квартал</th>
+            <th>Прибуток (грн)</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for i in range(q10_labels|length) %}
+          <tr>
+            <td class="cell-strong">{{ q10_labels[i] }}</td>
+            <td>{{ "%.2f"|format(q10_values[i]) }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="2" class="cell-empty">Немає даних за останній рік.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+</section>
+{% endblock %}

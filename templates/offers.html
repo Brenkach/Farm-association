@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+{% block title %}Пропозиції продукції{% endblock %}
+
+{% block body %}
+<section class="section lynx-section">
+
+  <h1 class="h-title lynx-title">Пропозиції продукції</h1>
+  <p class="h-subtitle lynx-subtitle">
+    Облік продукції фермерських господарств та їхніх цін.
+  </p>
+
+  {% if msg %}
+    <div class="alert alert-danger lynx-alert">{{ msg }}</div>
+  {% endif %}
+
+  <!-- ============================================
+       Почати додавання
+  ============================================= -->
+  <section class="card lynx-card">
+    <h2 class="h-subtitle lynx-subtitle">Почати додавання пропозиції</h2>
+
+    <form method="get"
+          class="form-inline lynx-inline"
+          style="margin-top:10px">
+
+      {% if role == "farmer" %}
+
+        <div style="flex:1">
+          <label class="form-label lynx-label">Спеціалізація</label>
+          <input class="input lynx-input"
+                 value="{{ current_farm.specialization.name }}"
+                 disabled>
+
+          <input type="hidden"
+                 name="spec_id_add"
+                 value="{{ current_farm.specialization_id }}">
+        </div>
+
+        <button class="btn btn-primary lynx-btn-primary"
+                style="margin-top:22px">
+          Почати
+        </button>
+
+      {% else %}
+
+        <div style="flex:1">
+          <label class="form-label lynx-label">Спеціалізація</label>
+
+          <select name="spec_id_add"
+                  class="select lynx-select">
+            <option value="">— Оберіть спеціалізацію —</option>
+            {% for s in specializations %}
+              <option value="{{ s.specialization_id }}"
+                {% if spec_id_add == s.specialization_id %}selected{% endif %}>
+                {{ s.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <button class="btn btn-primary lynx-btn-primary"
+                style="margin-top:22px">
+          Почати
+        </button>
+
+      {% endif %}
+
+    </form>
+  </section>
+
+
+  <!-- ============================================
+       Форма додавання
+  ============================================= -->
+  {% if spec_id_add %}
+  <section class="card lynx-card">
+    <h2 class="h-subtitle lynx-subtitle">Нова пропозиція</h2>
+
+    <form method="post"
+          class="form-grid lynx-grid"
+          style="margin-top:10px">
+
+      {% if role == "farmer" %}
+        <label class="form-label lynx-label">Господарство</label>
+        <input class="input lynx-input"
+               value="{{ current_farm.name }}"
+               disabled>
+
+        <input type="hidden"
+               name="farm_id"
+               value="{{ current_farm.farm_id }}">
+
+      {% else %}
+        <label class="form-label lynx-label">Господарство</label>
+        <select name="farm_id"
+                class="select lynx-select">
+          {% for f in farms %}
+            <option value="{{ f.farm_id }}">{{ f.name }}</option>
+          {% endfor %}
+        </select>
+      {% endif %}
+
+      <label class="form-label lynx-label">Спеціалізація</label>
+      <select class="select lynx-select" disabled>
+        {% for s in specializations %}
+          {% if s.specialization_id == spec_id_add %}
+            <option>{{ s.name }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+
+      <input type="hidden"
+             name="specialization_id"
+             value="{{ spec_id_add }}">
+
+      <label class="form-label lynx-label">Назва продукту</label>
+      <input class="input lynx-input"
+             name="product_name"
+             placeholder="Напр.: Мед липовий">
+
+      <label class="form-label lynx-label">Одиниця виміру</label>
+      <input class="input lynx-input"
+             name="uom"
+             placeholder="кг, л, шт">
+
+      <label class="form-label lynx-label">Ціна</label>
+      <input type="number" step="0.01"
+             class="input lynx-input"
+             name="unit_price">
+
+      <label class="form-label lynx-label">Кількість</label>
+      <input type="number" step="0.01"
+             class="input lynx-input"
+             name="quantity_available">
+
+      <label class="form-label lynx-label">Термін зберігання (днів)</label>
+      <input type="number"
+             class="input lynx-input"
+             name="shelf_life_days">
+
+      <label class="form-label lynx-label">Дата виробництва</label>
+      <input type="date"
+             class="input lynx-input"
+             name="produced_at">
+
+      <label class="form-label lynx-label">Примітка</label>
+      <textarea class="input lynx-input"
+                name="note"
+                rows="2"></textarea>
+
+      <div class="form-actions lynx-actions">
+        <button class="btn btn-primary lynx-btn-primary">
+          Зберегти
+        </button>
+      </div>
+
+    </form>
+  </section>
+  {% endif %}
+
+
+  <!-- ============================================
+       Фільтр
+  ============================================= -->
+  <section class="card lynx-card"
+           style="margin-bottom:16px;">
+    <h2 class="h-subtitle lynx-subtitle">Фільтр пропозицій</h2>
+
+    <form method="get"
+          class="form-grid lynx-grid">
+
+      <label class="form-label lynx-label">Спеціалізація</label>
+      <select name="specialization_id"
+              class="select lynx-select"
+              onchange="this.form.submit()">
+        <option value="">— Усі —</option>
+
+        {% for s in specializations %}
+          <option value="{{ s.specialization_id }}"
+            {% if filter_spec == s.specialization_id %}selected{% endif %}>
+            {{ s.name }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <label class="form-label lynx-label">Господарство</label>
+      <select name="farm_id"
+              class="select lynx-select"
+              onchange="this.form.submit()">
+        <option value="">— Усі —</option>
+
+        {% for f in farms %}
+          {% if not filter_spec or f.specialization_id == filter_spec %}
+            <option value="{{ f.farm_id }}"
+              {% if filter_farm == f.farm_id %}selected{% endif %}>
+              {{ f.name }}
+            </option>
+          {% endif %}
+        {% endfor %}
+      </select>
+
+      <div class="form-actions lynx-actions">
+        {% if filter_spec or filter_farm %}
+          <a class="btn btn-ghost lynx-btn"
+             href="{{ url_for('offers') }}">
+            Скинути фільтр
+          </a>
+        {% endif %}
+      </div>
+
+    </form>
+  </section>
+
+
+  <!-- ============================================
+       Список
+  ============================================= -->
+  <section class="card lynx-card">
+    <h2 class="h-subtitle lynx-subtitle">Список пропозицій</h2>
+
+    <div class="table-wrap lynx-table-wrap">
+
+      <table class="table lynx-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Господарство</th>
+            <th>Спеціалізація</th>
+            <th>Продукт</th>
+            <th>Базові дані</th>
+            <th>Примітка</th>
+            <th class="col-actions">Дії</th>
+          </tr>
+        </thead>
+
+        <tbody>
+        {% for o in items %}
+          <tr>
+
+            <td>{{ o.offer_id }}</td>
+
+            <td>{{ o.farm.name }}</td>
+
+            <td>{{ o.product_type.specialization.name }}</td>
+
+            <td>
+              <div class="cell-strong">{{ o.product_type.product_name }}</div>
+              <div class="cell-muted">{{ o.product_type.name }}</div>
+            </td>
+
+            <td>
+              {% if o.unit_price %}
+                <div>Ціна: {{ o.unit_price }}</div>
+              {% endif %}
+              {% if o.quantity_available %}
+                <div>Кількість: {{ o.quantity_available }}</div>
+              {% endif %}
+              {% if o.shelf_life_days %}
+                <div>Зберігання: {{ o.shelf_life_days }} днів</div>
+              {% endif %}
+              <div>Вироблено: {{ o.produced_at }}</div>
+            </td>
+
+            <td>{{ o.note or "—" }}</td>
+
+            <td class="col-actions">
+              <div class="actions">
+
+                {% if role == "superuser"
+                   or (role == "farmer"
+                       and current_farm
+                       and o.farm_id == current_farm.farm_id) %}
+
+                  <a class="btn btn-sm lynx-btn"
+                     href="{{ url_for('edit_offer', offer_id=o.offer_id) }}">
+                    Редагувати
+                  </a>
+
+                  <a class="btn btn-danger btn-sm lynx-btn-danger"
+                     onclick="return confirm('Видалити пропозицію?')"
+                     href="{{ url_for('delete_offer', offer_id=o.offer_id) }}">
+                    Видалити
+                  </a>
+
+                {% endif %}
+
+              </div>
+            </td>
+
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+
+    </div>
+  </section>
+
+</section>
+{% endblock %}

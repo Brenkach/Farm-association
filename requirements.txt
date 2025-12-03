@@ -1,0 +1,5 @@
+flask
+flask-sqlalchemy
+pg8000
+python-dotenv
+werkzeug

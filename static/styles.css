@@ -1,0 +1,363 @@
+
+:root {
+  --bg:#f7f7f8;
+  --card:#fff;
+  --text:#1d1d1f;
+  --muted:#6b7280;
+  --border:#e6e8ec;
+  --ring:0 0 0 3px rgba(248,198,48,.35);
+  --primary:#f8c630;
+  --danger:#ef4444;
+  --radius:16px;
+  --shadow:0 10px 30px rgba(0,0,0,.06);
+}
+
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+
+body {
+  font:500 15px/1.55 "Inter", system-ui, -apple-system, Segoe UI, Roboto;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.container {
+  max-width: 1500px;
+  margin: auto;
+  padding: 20px;
+}
+
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 9999;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.brand-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow);
+}
+
+.brand-name {
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+/* NAV */
+.nav { display:flex; gap:10px; flex-wrap:wrap; }
+.nav-link {
+  color: var(--muted);
+  padding: 10px 12px;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: .2s;
+}
+.nav-link:hover {
+  background: #f1f1f3;
+  color: var(--text);
+}
+.nav-link.active {
+  background: #fff;
+  border: 1px solid var(--border);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+/* PAGE TITLES */
+.h-title { margin: 4px 0 14px; font-size: 28px; font-weight: 700; }
+.h-subtitle { margin: 0 0 12px; color: var(--muted); font-size: 17px; }
+
+/* CARDS */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 26px;
+  box-shadow: var(--shadow);
+}
+
+/*
+   FORMS
+  */
+.form-grid {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 16px 22px;
+  align-items: center;
+}
+
+.input, .select, textarea {
+  width: 100%;
+  padding: 12px 15px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+  transition: .15s;
+}
+
+.input:focus, .select:focus, textarea:focus {
+  border-color: #f0c03a;
+  box-shadow: var(--ring);
+}
+
+.form-actions {
+  grid-column: 1/-1;
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+/*
+   BUTTONS
+ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: linear-gradient(#ffd659,#f8c630);
+  border-color: #f3cf5a;
+  font-weight: 600;
+}
+
+.btn-sm {
+  height: 36px;
+  padding: 0 14px;
+  font-size: 14px;
+  border-radius: 10px;
+}
+
+.btn-danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: white;
+}
+
+/*
+   TABLE SYSTEM
+ */
+.table-wrap {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fff;
+  overflow-x: auto;
+  padding: 6px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+  font-size: 15px;
+}
+
+/* Header */
+.table thead th {
+  background: #fafafa;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  color: #6b7280;
+  white-space: nowrap;
+  text-align: left;
+  vertical-align: middle;
+}
+
+/* Table cells */
+.table td {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle !important;
+  white-space: normal;
+  overflow-wrap: break-word;
+  line-height: 1.45;
+}
+
+/* Hover */
+.table tbody tr:hover {
+  background: #fffdf3;
+}
+
+/* Actions column */
+.col-actions {
+  width: 170px;
+  text-align: right;
+  vertical-align: middle !important;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.actions .btn {
+  height: 36px;
+  padding: 0 14px;
+}
+
+/* Empty cell */
+.cell-empty {
+  text-align: center;
+  padding: 28px;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+/*
+   CHIPS
+ */
+.chips {
+  display: flex;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.chip {
+  padding: 8px 14px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.chip-active {
+  background: #fff6cf;
+  color: #7a5d00;
+  border-color: #f3d67a;
+}
+
+/*
+   SAFETY FIXES
+   */
+.container,
+.section,
+.lynx-section,
+.table-wrap {
+  overflow: visible !important;
+}
+/*
+   REPORT TABS (Вкладки для аналітики)
+*/
+.report-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 10px 0 5px;
+}
+
+.report-tab {
+  padding: 10px 18px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 15px;
+  color: var(--muted);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: .2s ease;
+}
+
+.report-tab:hover {
+  background: #fdf7d1;
+  border-color: #f3d67a;
+  color: #7a5d00;
+}
+
+/* Активна вкладка */
+.report-tab-active {
+  background: linear-gradient(#ffd659, #f8c630);
+  border: 1px solid #f3cf5a;
+  color: #1d1d1f;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+}
+
+
+@media (max-width: 720px) {
+  .report-tab {
+    flex: 1 1 calc(50% - 10px);
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .report-tab {
+    flex: 1 1 100%;
+  }
+}
+/* ATTRIBUTES PAGE */
+
+.attr-card {
+    padding: 24px;
+}
+
+.attr-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 20px;
+    align-items: end;
+}
+
+.attr-field input {
+    width: 100%;
+}
+
+.attr-btn-wrap {
+    display: flex;
+    align-items: end;
+}
+
+.attr-btn {
+    width: 140px;
+}
+
+.attr-error {
+    margin-top: 16px;
+}
+
+.attr-hint {
+    margin-top: 8px;
+    opacity: 0.65;
+}

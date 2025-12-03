@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Створення працівника — Асоціація ФГ{% endblock %}
+
+{% block body %}
+
+<section class="card lynx-card lynx-narrow">
+
+  <h1 class="h-title lynx-title">Створення облікового запису працівника</h1>
+  <p class="h-subtitle lynx-subtitle">
+    Працівник зможе увійти в систему під вказаним логіном і паролем
+    та переглядати дані вашого господарства.
+  </p>
+
+  {% if msg %}
+    <div class="alert alert-danger lynx-alert">{{ msg }}</div>
+  {% endif %}
+  {% if success %}
+    <div class="alert lynx-alert">{{ success }}</div>
+  {% endif %}
+
+  <form method="POST" class="section lynx-section">
+
+    <div class="form-grid lynx-grid">
+
+      <label class="form-label lynx-label" for="login">
+        Логін працівника
+      </label>
+      <input id="login"
+             class="input lynx-input"
+             name="login"
+             required>
+
+      <label class="form-label lynx-label" for="password">
+        Пароль
+      </label>
+      <input id="password"
+             class="input lynx-input"
+             type="password"
+             name="password"
+             required>
+
+      <label class="form-label lynx-label" for="confirm">
+        Підтвердження паролю
+      </label>
+      <input id="confirm"
+             class="input lynx-input"
+             type="password"
+             name="confirm"
+             required>
+    </div>
+
+    <div class="form-actions lynx-actions">
+      <button class="btn btn-primary lynx-btn-primary" type="submit">
+        Створити працівника
+      </button>
+    </div>
+
+  </form>
+
+  {% if success and worker_login and worker_password_plain %}
+    <hr class="lynx-hr">
+
+    <h2 class="h-subtitle lynx-subtitle">
+      Дані для передачі працівнику
+    </h2>
+
+    <div class="section lynx-section">
+
+      <div>
+        <strong>Господарство:</strong>
+        {% if farmer_farm %}
+          {{ farmer_farm.name }} (ID {{ farmer_farm.farm_id }})
+        {% else %}
+          Не визначено
+        {% endif %}
+      </div>
+
+      <div>
+        <strong>Фермер:</strong>
+        {{ farmer_user.login }}
+      </div>
+
+      <div>
+        <strong>Логін працівника:</strong>
+        {{ worker_login }}
+      </div>
+
+      <div>
+        <strong>Пароль працівника:</strong>
+        {{ worker_password_plain }}
+      </div>
+
+      <p class="h-subtitle lynx-subtitle" style="font-size:13px;">
+        Після входу працівник матиме роль <b>worker</b> і зможе лише переглядати дані.
+      </p>
+    </div>
+  {% endif %}
+
+</section>
+
+{% endblock %}

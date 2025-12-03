@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Атрибути продукту{% endblock %}
+
+{% block body %}
+
+<div class="h-title lynx-title">Атрибути продукту: {{ pt.product_name }}</div>
+
+<form method="POST" class="card lynx-card section lynx-section">
+
+    <div class="form-grid lynx-grid">
+        <div>
+            <label class="form-label lynx-label">Сорт</label>
+            <input class="input lynx-input" name="color" placeholder="Наприклад: Липовий, Квітковий">
+        </div>
+
+        <div>
+            <label class="form-label lynx-label">Вага (кг)</label>
+            <input class="input lynx-input" name="weight" placeholder="Наприклад: 25">
+        </div>
+
+        <div class="form-actions lynx-actions" style="align-self:end;">
+            <button type="submit" class="btn btn-primary lynx-btn-primary">
+                Додати
+            </button>
+        </div>
+    </div>
+
+    <div class="lynx-info-block" style="margin-top:10px;">
+        <div class="lynx-info-text">
+            Якщо заповнений лише один параметр (сорт або вага) — буде додано тільки його.
+        </div>
+    </div>
+
+    {% if msg %}
+    <div class="alert alert-danger lynx-alert">{{ msg }}</div>
+    {% endif %}
+</form>
+
+
+<div class="section-gap"></div>
+
+<!-- Таблиця -->
+<div class="card lynx-card section lynx-section">
+
+    <div class="table-wrap lynx-table-wrap">
+        <table class="table lynx-table">
+
+            <thead>
+                <tr>
+                    <th style="width:60px">ID</th>
+                    <th>Назва</th>
+                    <th>Значення</th>
+                    <th class="col-actions">Дії</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for a in attrs %}
+                <tr>
+                    <td>{{ a.attribute_id }}</td>
+                    <td class="cell-strong">{{ a.attribute_type }}</td>
+                    <td>{{ a.attribute_value }}</td>
+
+                    <td class="col-actions">
+                        <a class="btn btn-danger btn-sm lynx-btn-danger"
+                           href="{{ url_for('delete_attribute', attribute_id=a.attribute_id) }}"
+                           onclick="return confirm('Видалити атрибут?')">
+                            Видалити
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="cell-empty">Атрибутів поки немає…</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+
+</div>
+
+{% endblock %}

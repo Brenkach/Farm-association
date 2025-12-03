@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Реєстрація фермера{% endblock %}
+
+{% block body %}
+
+<div class="page lynx-page">
+  <div class="h-title lynx-title">Реєстрація фермерського господарства</div>
+
+  <form method="POST" class="card lynx-card form-grid lynx-grid">
+
+    <!-- Логін -->
+    <label class="form-label lynx-label">Логін</label>
+    <input class="input lynx-input" name="login"
+           placeholder="Введіть логін" required>
+
+    <!-- Пароль -->
+    <label class="form-label lynx-label">Пароль</label>
+    <input type="password" class="input lynx-input"
+           name="password" placeholder="Введіть пароль" required>
+
+    <!-- Підтвердження -->
+    <label class="form-label lynx-label">Підтвердіть пароль</label>
+    <input type="password" class="input lynx-input"
+           name="confirm" placeholder="Повторіть пароль" required>
+
+    <!-- Назва господарства -->
+    <label class="form-label lynx-label">Назва господарства</label>
+    <input class="input lynx-input" name="farm_name" required>
+
+    <!-- Спеціалізація -->
+    <label class="form-label lynx-label">Спеціалізація</label>
+    <select class="select lynx-input" name="specialization_id" required>
+      <option value="">— Оберіть спеціалізацію —</option>
+      {% for s in specs %}
+        <option value="{{ s.specialization_id }}">{{ s.name }}</option>
+      {% endfor %}
+    </select>
+
+    <!-- ПІБ фермера -->
+    <label class="form-label lynx-label">Фермер</label>
+    <input class="input lynx-input" name="farmer_fullname"
+           placeholder="ПІБ фермера" required>
+
+    <!-- Регіон -->
+    <label class="form-label lynx-label">Регіон</label>
+    <input class="input lynx-input" name="region"
+           placeholder="Область / район" required>
+
+    <!-- Адреса -->
+    <label class="form-label lynx-label">Адреса</label>
+    <input class="input lynx-input" name="address"
+           placeholder="Адреса господарства" required>
+
+    <!-- Телефон -->
+    <label class="form-label lynx-label">Телефон</label>
+    <input class="input lynx-input" name="phone"
+           placeholder="+380..." required>
+
+    <!-- Дата видачі дозволу -->
+    <label class="form-label lynx-label">Дозвіл видано</label>
+    <input type="date" class="input lynx-input"
+           name="permit_issued_at" required>
+
+    <!-- Дата закінчення -->
+    <label class="form-label lynx-label">Дозвіл діє до</label>
+    <input type="date" class="input lynx-input"
+           name="permit_expires_at" required>
+
+    <!-- Submit -->
+    <div class="form-actions lynx-actions">
+      <button type="submit" class="btn btn-primary lynx-btn-primary">
+        Зареєструвати
+      </button>
+    </div>
+
+    {% if msg %}
+      <div class="alert alert-danger lynx-alert">{{ msg }}</div>
+    {% endif %}
+  </form>
+</div>
+
+{% endblock %}

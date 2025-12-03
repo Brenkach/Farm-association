@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}Працівники — Асоціація ФГ{% endblock %}
+
+{% block body %}
+<section class="section lynx-section">
+
+  <!-- Заголовок -->
+  <div class="section-header lynx-header">
+    <div>
+      <h1 class="h-title lynx-title">Працівники</h1>
+      <p class="h-subtitle lynx-subtitle">
+        Облік працівників господарств та створення доступів для них.
+      </p>
+    </div>
+
+    <form method="get" class="form-inline lynx-inline">
+      <label class="form-label-inline lynx-label-inline" for="farm">
+        Господарство:
+      </label>
+
+      <select id="farm" name="farm_id"
+              class="select lynx-select"
+              onchange="this.form.submit()">
+        <option value="">— всі —</option>
+
+        {% for f in farms %}
+          <option value="{{ f.farm_id }}"
+                  {% if filter_farm == f.farm_id %}selected{% endif %}>
+            {{ f.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+
+  <!-- Повідомлення після створення працівника -->
+  {% if new_worker %}
+    <div class="alert lynx-alert">
+      <strong>Створено працівника:</strong> {{ new_worker.full_name }}<br>
+      <strong>Логін:</strong> {{ new_worker.user_login }}<br>
+      <strong>Пароль:</strong> {{ new_password }}<br>
+      Пароль повторно показаний не буде — збережіть його.
+    </div>
+  {% endif %}
+
+  <div class="grid-2 lynx-grid-2">
+
+    <!-- Форма додавання працівника -->
+    <section class="card lynx-card">
+      <h2 class="h-subtitle lynx-subtitle">Додати працівника</h2>
+
+      <form method="post" class="form-grid lynx-grid">
+
+        {% if role == 'superuser' %}
+          <label class="form-label lynx-label">Господарство</label>
+          <select name="farm_id" class="select lynx-select" required>
+            {% for f in farms %}
+              <option value="{{ f.farm_id }}">{{ f.name }}</option>
+            {% endfor %}
+          </select>
+        {% else %}
+          <label class="form-label lynx-label">Господарство</label>
+          <div class="form-label-inline lynx-label-inline">
+            {{ current_farm.name }}
+          </div>
+          <input type="hidden"
+                 name="farm_id"
+                 value="{{ current_farm.farm_id }}">
+        {% endif %}
+
+        <label class="form-label lynx-label">ПІБ</label>
+        <input name="full_name" class="input lynx-input" required>
+
+        <label class="form-label lynx-label">Посада</label>
+        <input name="position" class="input lynx-input" required>
+
+        <label class="form-label lynx-label">Дата найму</label>
+        <input type="date" name="hire_date"
+               class="input lynx-input" required>
+
+        <label class="form-label lynx-label">Оклад (грн)</label>
+        <input type="number" step="0.01"
+               name="monthly_salary"
+               class="input lynx-input">
+
+        <label class="form-label lynx-label">Адреса</label>
+        <input name="address" class="input lynx-input">
+
+        <label class="form-label lynx-label">Телефон</label>
+        <input name="phone" class="input lynx-input">
+
+        <label class="form-label lynx-label">Логін працівника</label>
+        <input name="account_login" class="input lynx-input" required>
+
+        <label class="form-label lynx-label">Пароль працівника</label>
+        <input type="password" name="account_password"
+               class="input lynx-input" required>
+
+        <div class="form-actions lynx-actions">
+          <button class="btn btn-primary lynx-btn-primary">
+            Створити працівника
+          </button>
+        </div>
+
+      </form>
+    </section>
+
+    <!-- Таблиця працівників -->
+    <section class="card lynx-card">
+      <h2 class="h-subtitle lynx-subtitle">Список працівників</h2>
+
+      <div class="table-wrap lynx-table-wrap">
+        <table class="table lynx-table">
+
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>ПІБ</th>
+              <th>Посада</th>
+              <th>Господарство</th>
+              <th>Найнято</th>
+              <th>Оклад</th>
+              <th>Телефон</th>
+              <th>Логін</th>
+              <th class="col-actions">Дії</th>
+            </tr>
+          </thead>
+
+          <tbody>
+          {% for e in items %}
+            <tr>
+              <td>{{ e.employee_id }}</td>
+              <td class="cell-strong">{{ e.full_name }}</td>
+              <td>{{ e.position }}</td>
+              <td>{{ e.farm.name }}</td>
+              <td>{{ e.hire_date }}</td>
+              <td>{{ e.monthly_salary or '—' }}</td>
+              <td>{{ e.phone or '—' }}</td>
+
+              <td>{{ e.user.login if e.user else '—' }}</td>
+
+              <td class="actions lynx-actions">
+                <a class="btn btn-sm lynx-btn"
+                   href="{{ url_for('edit_employee',
+                   employee_id=e.employee_id) }}">
+                  Редагувати
+                </a>
+
+                <a class="btn btn-sm btn-danger lynx-btn-danger"
+                   href="{{ url_for('delete_employee',
+                                    employee_id=e.employee_id) }}"
+                   onclick="return confirm('Видалити {{ e.full_name }}?')">
+                  Видалити
+                </a>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="9" class="cell-empty">
+                Немає записів
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+</section>
+{% endblock %}

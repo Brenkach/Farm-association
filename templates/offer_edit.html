@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Редагувати пропозицію{% endblock %}
+
+{% block body %}
+<section class="card lynx-card lynx-narrow">
+
+  <h1 class="h-title lynx-title">Редагування пропозиції</h1>
+
+  {% if msg %}
+    <div class="alert alert-danger lynx-alert">{{ msg }}</div>
+  {% endif %}
+
+  <form method="POST" class="section lynx-section">
+
+    <!-- Продукт -->
+    <label class="form-label lynx-label">Продукт</label>
+    <input class="input lynx-input"
+           value="{{ offer.product_type.product_name }}"
+           disabled>
+
+    <!-- Одиниця виміру -->
+    <label class="form-label lynx-label">Одиниця виміру</label>
+    <input class="input lynx-input"
+           name="uom"
+           value="{{ offer.uom }}">
+
+    <!-- Ціна -->
+    <label class="form-label lynx-label">Ціна</label>
+    <input type="number"
+           step="0.01"
+           class="input lynx-input"
+           name="unit_price"
+           value="{{ offer.unit_price }}">
+
+    <!-- Кількість -->
+    <label class="form-label lynx-label">Кількість</label>
+    <input type="number"
+           step="0.01"
+           class="input lynx-input"
+           name="quantity_available"
+           value="{{ offer.quantity_available }}">
+
+    <!-- Термін зберігання -->
+    <label class="form-label lynx-label">Термін зберігання (днів)</label>
+    <input type="number"
+           class="input lynx-input"
+           name="shelf_life_days"
+           value="{{ offer.shelf_life_days }}">
+
+    <!-- Дата виробництва -->
+    <label class="form-label lynx-label">Дата виробництва</label>
+    <input type="date"
+           class="input lynx-input"
+           name="produced_at"
+           value="{{ offer.produced_at }}">
+
+    <!-- Примітка -->
+    <label class="form-label lynx-label">Примітка</label>
+    <textarea class="input lynx-input"
+              name="note"
+              rows="2">{{ offer.note }}</textarea>
+
+    <div class="form-actions lynx-actions">
+      <button class="btn btn-primary lynx-btn-primary" type="submit">
+        Зберегти
+      </button>
+
+      <a class="btn btn-ghost lynx-btn"
+         href="{{ url_for('offers') }}">
+        Назад
+      </a>
+    </div>
+
+  </form>
+
+</section>
+{% endblock %}

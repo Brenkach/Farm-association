@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Редагування господарства — Асоціація ФГ{% endblock %}
+
+{% block body %}
+<section class="card lynx-card lynx-card-narrow">
+
+  <h1 class="h-title lynx-title">
+    Редагування господарства #{{ f.farm_id }}
+  </h1>
+
+  {% if msg %}
+    <div class="alert alert-danger lynx-alert">
+      {{ msg }}
+    </div>
+  {% endif %}
+
+  <form method="post" class="form-grid lynx-grid">
+
+    <!-- Назва -->
+    <label class="form-label lynx-label" for="name">
+      Назва
+    </label>
+    <input id="name"
+           name="name"
+           class="input lynx-input"
+           value="{{ f.name }}"
+           required>
+
+    <!-- Спеціалізація -->
+    <label class="form-label lynx-label" for="specialization_id">
+      Спеціалізація
+    </label>
+    <select id="specialization_id"
+            name="specialization_id"
+            class="select lynx-select"
+            required>
+      {% for s in specs %}
+        <option value="{{ s.specialization_id }}"
+                {% if s.specialization_id == f.specialization_id %}
+                  selected
+                {% endif %}>
+          {{ s.name }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <!-- Фермер -->
+    <label class="form-label lynx-label" for="farmer_fullname">
+      ПІБ фермера
+    </label>
+    <input id="farmer_fullname"
+           name="farmer_fullname"
+           class="input lynx-input"
+           value="{{ f.farmer_fullname or '' }}">
+
+    <!-- Регіон -->
+    <label class="form-label lynx-label" for="region">
+      Регіон
+    </label>
+    <input id="region"
+           name="region"
+           class="input lynx-input"
+           value="{{ f.region or '' }}">
+
+    <!-- Адреса -->
+    <label class="form-label lynx-label" for="address">
+      Адреса
+    </label>
+    <input id="address"
+           name="address"
+           class="input lynx-input"
+           value="{{ f.address or '' }}">
+
+    <!-- Телефон -->
+    <label class="form-label lynx-label" for="phone">
+      Телефон
+    </label>
+    <input id="phone"
+           name="phone"
+           class="input lynx-input"
+           placeholder="+380XXXXXXXXX"
+           type="tel"
+           pattern="\+?\d{10,12}"
+           inputmode="numeric"
+           value="{{ f.phone or '' }}">
+
+    <!-- Видано -->
+    <label class="form-label lynx-label" for="permit_issued_at">
+      Дата дозволу (видано)
+    </label>
+    <input id="permit_issued_at"
+           type="date"
+           name="permit_issued_at"
+           class="input lynx-input"
+           required
+           value="{{ f.permit_issued_at or '' }}">
+
+    <!-- Діє до -->
+    <label class="form-label lynx-label" for="permit_expires_at">
+      Дозвіл діє до
+    </label>
+    <input id="permit_expires_at"
+           type="date"
+           name="permit_expires_at"
+           class="input lynx-input"
+           required
+           value="{{ f.permit_expires_at or '' }}">
+
+    <!-- Кнопки -->
+    <div class="form-actions lynx-actions">
+      <button class="btn btn-primary lynx-btn-primary" type="submit">
+        Зберегти
+      </button>
+
+      <a class="btn btn-ghost lynx-btn"
+         href="{{ url_for('farms') }}">
+        Скасувати
+      </a>
+    </div>
+
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}Господарства — Асоціація ФГ{% endblock %}
+
+{% block body %}
+<section class="section lynx-section">
+
+  <!-- Заголовок та фільтри -->
+  <div class="section-header lynx-header">
+
+    <div>
+      <h1 class="h-title lynx-title">Господарства</h1>
+      <p class="h-subtitle lynx-subtitle">
+        Облік фермерських господарств та стан їхніх дозвільних документів.
+      </p>
+    </div>
+
+    <!-- Чіпи -->
+    <div class="chips lynx-chips">
+      <a href="{{ url_for('farms') }}"
+         class="chip lynx-chip {% if not request.args.get('filter') %}chip-active lynx-chip-active{% endif %}">
+        Усі господарства
+      </a>
+
+      <a href="{{ url_for('farms', filter='expiring') }}"
+         class="chip lynx-chip {% if request.args.get('filter') == 'expiring' %}chip-active lynx-chip-active{% endif %}">
+        Лише з дозволами, що закінчуються
+      </a>
+    </div>
+
+  </div>
+
+  {% set role = session.get('access_right') %}
+
+  <!-- Кнопка додавання -->
+  {% if role == 'superuser' %}
+    <div class="toolbar lynx-toolbar" style="margin-bottom: 12px;">
+      <button class="btn btn-primary lynx-btn-primary"
+              type="button"
+              onclick="document.getElementById('addForm').toggleAttribute('hidden')">
+        + Додати господарство
+      </button>
+    </div>
+
+    <!-- Блок додавання господарства -->
+    <section class="card lynx-card"
+             id="addForm"
+             {% if msg %}style="display:block"{% else %}hidden{% endif %}>
+
+      <h2 class="h-subtitle lynx-subtitle">Нове господарство</h2>
+
+      {% if msg %}
+        <div class="alert alert-danger lynx-alert">{{ msg }}</div>
+      {% endif %}
+
+      <form method="post" class="form-grid lynx-grid">
+
+        <label class="form-label lynx-label">Назва</label>
+        <input class="input lynx-input" name="name" required>
+
+        <label class="form-label lynx-label">Спеціалізація</label>
+        <select class="select lynx-select"
+                name="specialization_id" required>
+          {% for s in specs %}
+            <option value="{{ s.specialization_id }}">{{ s.name }}</option>
+          {% endfor %}
+        </select>
+
+        <label class="form-label lynx-label">ПІБ фермера</label>
+        <input class="input lynx-input" name="farmer_fullname">
+
+        <label class="form-label lynx-label">Регіон</label>
+        <input class="input lynx-input" name="region">
+
+        <label class="form-label lynx-label">Адреса</label>
+        <input class="input lynx-input" name="address">
+
+        <label class="form-label lynx-label">Телефон</label>
+        <input class="input lynx-input"
+               name="phone"
+               placeholder="+380XXXXXXXXX"
+               type="tel"
+               pattern="^\+\d{12}$">
+
+        <label class="form-label lynx-label">Дата видачі дозволу</label>
+        <input type="date" class="input lynx-input"
+               name="permit_issued_at" required>
+
+        <label class="form-label lynx-label">Дозвіл діє до</label>
+        <input type="date" class="input lynx-input"
+               name="permit_expires_at" required>
+
+        <div class="form-actions lynx-actions">
+          <button class="btn btn-primary lynx-btn-primary">
+            Зберегти
+          </button>
+          <button class="btn btn-ghost lynx-btn">Очистити</button>
+        </div>
+
+      </form>
+    </section>
+  {% endif %}
+
+  <!-- Статистика -->
+  <div class="lynx-stats" style="margin: 10px 0 16px;">
+    <span class="badge lynx-badge">
+      Всього господарств: {{ total_count }}
+    </span>
+    <span class="badge lynx-badge">
+      Дозволи закінчуються (90 днів): {{ expiring_count }}
+    </span>
+  </div>
+
+ <!-- Таблиця господарств -->
+<section class="card lynx-card">
+  <h2 class="h-subtitle lynx-subtitle">Список господарств</h2>
+
+  <div class="table-wrap lynx-table-wrap">
+
+    <table class="table lynx-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Назва</th>
+          <th>Фермер</th>
+          <th>Спеціалізація</th>
+          <th>Регіон</th>
+          <th>Телефон</th>
+          <th>Дозвіл</th>
+          <th class="col-actions">Дії</th>
+        </tr>
+      </thead>
+
+      <tbody>
+      {% for f in farms %}
+        <tr>
+          <td>{{ f.farm_id }}</td>
+
+          <td class="cell-strong">{{ f.name }}</td>
+
+          <td>{{ f.farmer_fullname or "—" }}</td>
+
+          <td>{{ f.specialization.name }}</td>
+
+          <td>{{ f.region or "—" }}</td>
+
+          <td>{{ f.phone or "—" }}</td>
+
+          <td class="lynx-license">
+            {% if f.permit_issued_at or f.permit_expires_at %}
+              <div>Видано: {{ f.permit_issued_at or "—" }}</div>
+              <div>
+                Діє до: {{ f.permit_expires_at or "—" }}
+                {% if f.permit_expires_at %}
+                  {% if f.permit_expires_at < today %}
+                    (прострочено)
+                  {% elif f.permit_expires_at <= cutoff %}
+                    (закінчується)
+                  {% else %}
+                    (чинний)
+                  {% endif %}
+                {% endif %}
+              </div>
+            {% else %}
+              —
+            {% endif %}
+          </td>
+
+          <!-- ВИПРАВЛЕНА КОЛОНКА ДІЙ -->
+          <td class="col-actions">
+            <div class="actions">
+
+              {% if role == 'superuser'
+                 or (role == 'farmer' and session.get('farm_id') == f.farm_id) %}
+                <a class="btn btn-sm lynx-btn"
+                   href="{{ url_for('edit_farm', farm_id=f.farm_id) }}">
+                  Редагувати
+                </a>
+              {% endif %}
+
+              {% if role == 'superuser' %}
+                <a class="btn btn-sm btn-danger lynx-btn-danger"
+                   href="{{ url_for('delete_farm', farm_id=f.farm_id) }}"
+                   onclick="return confirm('Видалити господарство «{{ f.name }}»?')">
+                  Видалити
+                </a>
+              {% endif %}
+
+            </div>
+          </td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="8" class="cell-empty">
+            Немає даних
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+  </div>
+</section>
+
+
+</section>
+{% endblock %}

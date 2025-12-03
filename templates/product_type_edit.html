@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Редагування виду продукції{% endblock %}
+
+{% block body %}
+<section class="card lynx-card lynx-narrow">
+
+  <h1 class="h-title lynx-title">Редагування виду продукції</h1>
+
+  {% if msg %}
+    <div class="alert alert-danger lynx-alert">{{ msg }}</div>
+  {% endif %}
+
+  <form method="POST" class="section lynx-section">
+
+    <!-- Назва категорії -->
+    <label class="form-label lynx-label">Назва (вид продукції)</label>
+    {% if role == "superuser" %}
+      <input class="input lynx-input"
+             name="name"
+             value="{{ pt.name }}">
+    {% else %}
+      <input class="input lynx-input"
+             value="{{ pt.name }}"
+             disabled>
+    {% endif %}
+
+    <!-- Спеціалізація -->
+    <label class="form-label lynx-label">Спеціалізація</label>
+
+    {% if role == "superuser" %}
+      <select class="input lynx-input"
+              name="specialization_id">
+        {% for s in specs %}
+          <option value="{{ s.specialization_id }}"
+            {% if s.specialization_id == pt.specialization_id %}selected{% endif %}>
+            {{ s.name }}
+          </option>
+        {% endfor %}
+      </select>
+
+    {% else %}
+      <input class="input lynx-input"
+             value="{{ pt.specialization.name }}"
+             disabled>
+      <input type="hidden"
+             name="specialization_id"
+             value="{{ pt.specialization_id }}">
+    {% endif %}
+
+    <!-- Назва конкретного продукту -->
+    <label class="form-label lynx-label">Продукт</label>
+    <input class="input lynx-input"
+           name="product_name"
+           value="{{ pt.product_name }}">
+
+    <div class="form-actions lynx-actions">
+      <button class="btn btn-primary lynx-btn-primary" type="submit">
+        Зберегти
+      </button>
+
+      <a class="btn btn-ghost btn-sm lynx-btn"
+         href="{{ url_for('product_types') }}">
+        Назад
+      </a>
+
+      <a class="btn btn-sm btn-secondary lynx-btn"
+         href="{{ url_for('product_type_attributes', product_type_id=pt.product_type_id) }}">
+        Атрибути продукту
+      </a>
+    </div>
+
+  </form>
+</section>
+
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Вхід — Асоціація ФГ{% endblock %}
+
+{% block body %}
+
+<section class="card lynx-card lynx-narrow">
+  <h1 class="h-title lynx-title">Вхід до системи</h1>
+
+  {% if msg %}
+    <div class="alert alert-danger lynx-alert">{{ msg }}</div>
+  {% endif %}
+
+  <form method="post" class="section lynx-section">
+
+    <!-- Логін -->
+    <div class="lynx-field">
+      <label class="form-label lynx-label" for="login">Логін</label>
+      <input id="login" class="input lynx-input" type="text" name="login" required>
+    </div>
+
+    <!-- Пароль -->
+    <div class="lynx-field">
+      <label class="form-label lynx-label" for="password">Пароль</label>
+      <input id="password" class="input lynx-input" type="password" name="password" required>
+    </div>
+
+    <!-- Дії -->
+    <div class="form-actions lynx-actions">
+      <button class="btn btn-primary lynx-btn-primary" type="submit">
+        Увійти
+      </button>
+
+      <a class="btn btn-ghost btn-sm lynx-btn" href="{{ url_for('reset_password') }}">
+        Забули пароль?
+      </a>
+
+      <a class="btn btn-ghost btn-sm lynx-btn" href="{{ url_for('register') }}">
+        Зареєструватись як фермер
+      </a>
+    </div>
+
+  </form>
+
+</section>
+
+{% endblock %}

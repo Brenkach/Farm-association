@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>{% block title %}Асоціація ФГ{% endblock %}</title>
+
+  <link rel="stylesheet"
+        href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body class="lynx-body">
+
+<header class="site-header lynx-header">
+  <div class="container lynx-shell header-inner lynx-header-inner">
+
+    <!-- Брендинг -->
+    <a class="brand lynx-brand" href="{{ url_for('index') }}">
+      <span class="brand-mark lynx-brand-mark">AF</span>
+      <span class="brand-name lynx-brand-name">
+        Асоціація фермерських господарств
+      </span>
+    </a>
+
+    <!-- Навігація -->
+    {% set ep = request.endpoint or '' %}
+    {% set role = session.get('access_right') %}
+    <nav class="nav lynx-nav">
+      {% if session.get('login') %}
+
+        <a href="{{ url_for('farms') }}"
+           class="nav-link lynx-nav-link {% if ep.startswith('farms') %}active lynx-nav-link--active{% endif %}">
+          Господарства
+        </a>
+
+        <a href="{{ url_for('product_types') }}"
+           class="nav-link lynx-nav-link {% if ep.startswith('product_types') %}active lynx-nav-link--active{% endif %}">
+          Види продукції
+        </a>
+
+        <a href="{{ url_for('offers') }}"
+           class="nav-link lynx-nav-link {% if ep.startswith('offers') %}active lynx-nav-link--active{% endif %}">
+          Пропозиції
+        </a>
+
+        <a href="{{ url_for('employees') }}"
+           class="nav-link lynx-nav-link {% if ep.startswith('employees') %}active lynx-nav-link--active{% endif %}">
+          Працівники
+        </a>
+
+        <a href="{{ url_for('report_producers') }}"
+           class="nav-link lynx-nav-link {% if ep.startswith('report_producers') %}active lynx-nav-link--active{% endif %}">
+          Звіт
+        </a>
+
+        <span class="nav-link lynx-nav-user"
+              style="cursor:default;opacity:.8;">
+          {{ session.get('login') }} ({{ role }})
+        </span>
+
+        <a href="{{ url_for('logout') }}"
+           class="nav-link lynx-nav-link">
+          Вихід
+        </a>
+
+      {% else %}
+
+        <a href="{{ url_for('login') }}"
+           class="nav-link lynx-nav-link {% if ep == 'login' %}active lynx-nav-link--active{% endif %}">
+          Вхід
+        </a>
+
+        <a href="{{ url_for('register') }}"
+           class="nav-link lynx-nav-link {% if ep == 'register' %}active lynx-nav-link--active{% endif %}">
+          Реєстрація фермера
+        </a>
+
+        <a href="{{ url_for('manual') }}"
+           class="nav-link lynx-nav-link {% if ep == 'manual' %}active lynx-nav-link--active{% endif %}">
+          Посібник
+        </a>
+
+{% endif %}
+
+    </nav>
+  </div>
+</header>
+
+<main class="container lynx-shell page lynx-page">
+  {% block body %}{% endblock %}
+</main>
+
+<footer class="site-footer lynx-footer">
+  <div class="container lynx-shell">
+     2025 Асоціація ФГ
+  </div>
+</footer>
+
+</body>
+</html>
