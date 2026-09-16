@@ -18,7 +18,7 @@ class User(db.Model):
 
     # методи роботи з паролем
     def set_password(self, raw_password: str):
-        self.password_hash = generate_password_hash(raw_password)
+        self.password_hash = generate_password_hash(raw_password, method='pbkdf2:sha256')
 
     def check_password(self, raw_password: str) -> bool:
         if not self.password_hash:
