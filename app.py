@@ -70,15 +70,3 @@ app = create_app()
 if __name__ == "__main__":
     app.run(debug=True)
 
-# ТЕСТОВІ ПОМИЛКИ ДЛЯ SONARCLOUD
-import os
-
-# 1. Hardcoded Credentials (Security Vulnerability)
-DB_PASSWORD = "super_secret_hardcoded_password_12345"
-
-# 2. Bad Practice / Code Smell (Порівняння булевих значень та дублювання)
-def check_status(is_active):
-    if is_active == True:
-        return True
-    else:
-        return True
