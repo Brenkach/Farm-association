@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b38d18f5-92bc-4c64-88f7-42584edd8e89" name="Changes" comment="&quot;Fix docker-compose configuration&quot;" />
+    <list default="true" id="b38d18f5-92bc-4c64-88f7-42584edd8e89" name="Changes" comment="fix: remove intentional test vulnerabilities">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -131,7 +133,15 @@
       <option name="project" value="LOCAL" />
       <updated>1789924188498</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="fix: remove intentional test vulnerabilities">
+      <option name="closed" value="true" />
+      <created>1789924533610</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1789924533610</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -139,7 +149,9 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="&quot;Fix docker-compose configuration&quot;" />
-    <option name="LAST_COMMIT_MESSAGE" value="&quot;Fix docker-compose configuration&quot;" />
+    <MESSAGE value="&quot;fix: remove intentional test vulnerabilities&quot;" />
+    <MESSAGE value="fix: remove intentional test vulnerabilities" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix: remove intentional test vulnerabilities" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Kursach$Kursach.coverage" NAME="Kursach Coverage Results" MODIFIED="1755002077728" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
