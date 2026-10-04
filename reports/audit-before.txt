@@ -1,0 +1,6 @@
+Found 3 known vulnerabilities in 2 packages
+Name          Version ID              Fix Versions
+------------- ------- --------------- ------------
+click         8.1.8   PYSEC-2026-2132 8.3.3
+python-dotenv 1.2.1   PYSEC-2026-2270 1.2.2
+python-dotenv 1.2.1   PYSEC-2026-2270 1.2.2

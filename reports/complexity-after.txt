@@ -1,0 +1,26 @@
+== Cognitive (flake8, >15 only) ==
+routes.py:103:1: CCR001 Cognitive complexity is too high (387 > 15)
+routes.py:143:9: CCR001 Cognitive complexity is too high (16 > 15)
+routes.py:269:9: CCR001 Cognitive complexity is too high (26 > 15)
+routes.py:399:9: CCR001 Cognitive complexity is too high (17 > 15)
+routes.py:560:9: CCR001 Cognitive complexity is too high (69 > 15)
+routes.py:1025:9: CCR001 Cognitive complexity is too high (50 > 15)
+== Cyclomatic new functions (radon) ==
+    F 33:0 _validate_farm_form - B (6)
+    F 52:0 _save_farm - A (2)
+    F 72:0 _try_create_farm - A (2)
+    F 80:0 _render_farms_page - A (2)
+    F 24:0 _expiring_conditions - A (1)
+== Cyclomatic farms() (radon) ==
+/tmp/farms_after.py
+    F 1:0 farms - A (4)
+== pytest ==
+.........                                                                [100%]
+9 passed in 0.86s
+== Cognitive per function (cognitive_complexity lib) ==
+farms: 5
+_validate_farm_form: 5
+_save_farm: 1
+_try_create_farm: 1
+_render_farms_page: 1
+_expiring_conditions: 0
