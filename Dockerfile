@@ -6,7 +6,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir --only-binary :all: --require-hashes -r requirements.txt
 # Копіюємо лише потрібні файли, а не весь контекст
-COPY app.py extensions.py models.py routes.py ./
+COPY app.py extensions.py models.py routes.py services.py ./
 COPY templates/ templates/
 COPY static/ static/
 
