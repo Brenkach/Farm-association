@@ -4,3 +4,4 @@ pg8000
 python-dotenv
 werkzeug
 greenlet
+tenacity
