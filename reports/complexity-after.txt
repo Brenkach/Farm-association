@@ -17,3 +17,10 @@ routes.py:1025:9: CCR001 Cognitive complexity is too high (50 > 15)
 == pytest ==
 .........                                                                [100%]
 9 passed in 0.86s
+== Cognitive per function (cognitive_complexity lib) ==
+farms: 5
+_validate_farm_form: 5
+_save_farm: 1
+_try_create_farm: 1
+_render_farms_page: 1
+_expiring_conditions: 0
