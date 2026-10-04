@@ -18,6 +18,88 @@ from models import (
     )
 
 
+EXPIRY_WINDOW_DAYS = 90
+
+
+def _expiring_conditions(today, cutoff):
+    """Єдине місце, де описано умову 'дозвіл спливає найближчим часом'."""
+    return (
+        Farm.permit_expires_at.isnot(None),
+        Farm.permit_expires_at >= today,
+        Farm.permit_expires_at <= cutoff,
+    )
+
+
+def _validate_farm_form(form):
+    """Повертає (повідомлення_про_помилку, дата_видачі, дата_завершення)."""
+    issued = form.get("permit_issued_at")
+    expires = form.get("permit_expires_at")
+    if not issued or not expires:
+        return "Поля дат дозволу є обов'язковими!", None, None
+
+    phone = form.get("phone", "").strip()
+    if phone and not 9 <= len(phone) <= 15:
+        return "Телефон повинен містити лише цифри (9–15 символів).", None, None
+
+    issued_dt = date.fromisoformat(issued)
+    expires_dt = date.fromisoformat(expires)
+    if expires_dt < issued_dt:
+        return "Дата завершення дозволу не може бути раніше дати видачі!", None, None
+
+    return None, issued_dt, expires_dt
+
+
+def _save_farm(form, issued_dt, expires_dt):
+    """Зберігає господарство. Повертає повідомлення про помилку або None."""
+    try:
+        db.session.add(Farm(
+            name=form["name"],
+            specialization_id=int(form["specialization_id"]),
+            farmer_fullname=form.get("farmer_fullname"),
+            region=form.get("region"),
+            address=form.get("address"),
+            phone=form.get("phone", "").strip(),
+            permit_issued_at=issued_dt,
+            permit_expires_at=expires_dt,
+        ))
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return f"Помилка збереження: {e}"
+    return None
+
+
+def _try_create_farm(form):
+    """Валідує форму й зберігає. Повертає повідомлення про помилку або None."""
+    error, issued_dt, expires_dt = _validate_farm_form(form)
+    if error:
+        return error
+    return _save_farm(form, issued_dt, expires_dt)
+
+
+def _render_farms_page(msg):
+    specs = Specialization.query.order_by(Specialization.name).all()
+    today = date.today()
+    cutoff = today + timedelta(days=EXPIRY_WINDOW_DAYS)
+    expiring = _expiring_conditions(today, cutoff)
+
+    q = Farm.query
+    if request.args.get("filter") == "expiring":
+        q = q.filter(*expiring)
+
+    return render_template(
+        "farms.html",
+        farms=q.order_by(Farm.farm_id.desc()).all(),
+        specs=specs,
+        total_count=Farm.query.count(),
+        expiring_count=Farm.query.filter(*expiring).count(),
+        today=today,
+        cutoff=cutoff,
+        msg=msg,
+    )
+
+
+
 def register_routes(app):
         # --- Manual
         @app.route("/manual")
@@ -167,82 +249,18 @@ def register_routes(app):
         @app.route("/farms", methods=["GET", "POST"])
         @require_roles("superuser", "farmer", "worker")
         def farms():
-            role = session.get("access_right")
             msg = None
 
             if request.method == "POST":
                 # створювати господарства може лише суперюзер
-                if role != "superuser":
+                if session.get("access_right") != "superuser":
                     return redirect(url_for("forbidden"))
 
-                permit_issued = request.form.get("permit_issued_at")
-                permit_expires = request.form.get("permit_expires_at")
-                phone_val = request.form.get("phone", "").strip()
+                msg = _try_create_farm(request.form)
+                if msg is None:
+                    return redirect(url_for("farms"))
 
-                if not permit_issued or not permit_expires:
-                    msg = "Поля дат дозволу є обов'язковими!"
-                else:
-                    if phone_val and (len(phone_val) < 9 or len(phone_val) > 15):
-                        msg = "Телефон повинен містити лише цифри (9–15 символів)."
-
-                    if not msg:
-                        issued_dt = date.fromisoformat(permit_issued)
-                        expires_dt = date.fromisoformat(permit_expires)
-
-                        if expires_dt < issued_dt:
-                            msg = "Дата завершення дозволу не може бути раніше дати видачі!"
-
-                    if not msg:
-                        try:
-                            f = Farm(
-                                name=request.form["name"],
-                                specialization_id=int(request.form["specialization_id"]),
-                                farmer_fullname=request.form.get("farmer_fullname"),
-                                region=request.form.get("region"),
-                                address=request.form.get("address"),
-                                phone=phone_val,
-                                permit_issued_at=issued_dt,
-                                permit_expires_at=expires_dt,
-                            )
-                            db.session.add(f)
-                            db.session.commit()
-                            return redirect(url_for("farms"))
-                        except Exception as e:
-                            db.session.rollback()
-                            msg = f"Помилка збереження: {e}"
-
-            specs = Specialization.query.order_by(Specialization.name).all()
-            today = date.today()
-            cutoff = today + timedelta(days=90)
-
-            q = Farm.query
-
-            if request.args.get("filter") == "expiring":
-                q = q.filter(
-                    Farm.permit_expires_at.isnot(None),
-                    Farm.permit_expires_at >= today,
-                    Farm.permit_expires_at <= cutoff,
-                )
-
-            farms_list = q.order_by(Farm.farm_id.desc()).all()
-
-            total_count = Farm.query.count()
-            expiring_count = Farm.query.filter(
-                Farm.permit_expires_at.isnot(None),
-                Farm.permit_expires_at >= today,
-                Farm.permit_expires_at <= cutoff,
-            ).count()
-
-            return render_template(
-                "farms.html",
-                farms=farms_list,
-                specs=specs,
-                total_count=total_count,
-                expiring_count=expiring_count,
-                today=today,
-                cutoff=cutoff,
-                msg=msg,
-            )
+            return _render_farms_page(msg)
 
         # ---------------- EDIT FARM ----------------
 
