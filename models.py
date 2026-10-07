@@ -1,7 +1,8 @@
 from datetime import date, timedelta
-from werkzeug.security import generate_password_hash, check_password_hash
-from extensions import db
 
+from werkzeug.security import check_password_hash, generate_password_hash
+
+from extensions import db
 
 # ---------------- USERS ----------------
 
@@ -116,11 +117,6 @@ class ProductType(db.Model):
         cascade="all, delete-orphan",
     )
 
-    attributes = db.relationship(
-        "ProductAttribute",
-        back_populates="product_type",
-        cascade="all, delete-orphan",
-    )
     attributes = db.relationship(
         "ProductAttribute",
         back_populates="product_type",

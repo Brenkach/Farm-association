@@ -13,9 +13,9 @@ os.environ.update({
     "SECRET_KEY": "test",
 })
 
-from app import app as flask_app   # app.py не змінюємо
+from app import app as flask_app  # app.py не змінюємо
 from extensions import db
-from models import Specialization, Farm, User
+from models import Farm, Specialization, User
 
 
 @pytest.fixture()

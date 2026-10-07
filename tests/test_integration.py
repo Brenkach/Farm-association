@@ -1,7 +1,7 @@
 from datetime import date
 
 from extensions import db
-from models import User, Farm, Employee, ProductOffer, ProductType
+from models import Employee, Farm, ProductOffer, ProductType, User
 from tests.conftest import login
 
 

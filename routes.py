@@ -1,20 +1,18 @@
 from datetime import date, timedelta
-import json
 
+from flask import redirect, render_template, request, session, url_for
 from sqlalchemy import func
-
-from flask import request, redirect, url_for, render_template, session
 
 from extensions import db, require_roles
 from models import (
-    User,
-    Specialization,
-    Farm,
-    ProductType,
-    ProductOffer,
     Employee,
+    Farm,
     ProductAttribute,
+    ProductOffer,
     ProductOfferValue,
+    ProductType,
+    Specialization,
+    User,
 )
 
 
@@ -321,7 +319,7 @@ def register_routes(app):
         role = session.get("access_right")
         user_farm_id = session.get("farm_id")
 
-        from models import ProductType, Farm, Specialization
+        from models import Farm, ProductType, Specialization
 
         specs = Specialization.query.order_by(Specialization.name).all()
         msg = None
@@ -379,7 +377,7 @@ def register_routes(app):
     @app.route("/product-types/<int:product_type_id>/attributes", methods=["GET", "POST"])
     @require_roles("superuser", "farmer")
     def product_type_attributes(product_type_id):
-        from models import ProductType, ProductAttribute, Farm
+        from models import Farm, ProductAttribute, ProductType
 
         pt = ProductType.query.get_or_404(product_type_id)
         role = session.get("access_right")
@@ -439,7 +437,7 @@ def register_routes(app):
     @app.route("/product-types/<int:product_type_id>/edit", methods=["GET", "POST"])
     @require_roles("superuser", "farmer")
     def edit_product_type(product_type_id):
-        from models import ProductType, Specialization, Farm
+        from models import Farm, ProductType, Specialization
 
         pt = ProductType.query.get_or_404(product_type_id)
 
@@ -485,7 +483,7 @@ def register_routes(app):
     @app.get("/product-types/<int:product_type_id>/delete")
     @require_roles("superuser", "farmer")
     def delete_product_type(product_type_id):
-        from models import ProductType, Farm
+        from models import Farm, ProductType
 
         pt = ProductType.query.get_or_404(product_type_id)
 
@@ -513,7 +511,7 @@ def register_routes(app):
     @app.get("/attribute/<int:attribute_id>/delete")
     @require_roles("superuser", "farmer")
     def delete_attribute(attribute_id):
-        from models import ProductAttribute, ProductType, Farm
+        from models import Farm, ProductAttribute, ProductType
 
         attr = ProductAttribute.query.get_or_404(attribute_id)
         pt = ProductType.query.get(attr.product_type_id)

@@ -1,6 +1,6 @@
 from datetime import date
 
-from models import User, ProductOffer
+from models import ProductOffer, User
 
 
 def test_set_password_hashes_value():

@@ -1,11 +1,11 @@
 import os
 
+from dotenv import load_dotenv
 from flask import Flask, session
 from sqlalchemy.engine import URL
-from dotenv import load_dotenv
 
 from extensions import db
-from models import User, Specialization
+from models import Specialization, User
 from routes import register_routes
 
 load_dotenv()
