@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: farm-web
+  namespace: farm-association
+  labels:
+    app: farm-web
+    app.kubernetes.io/part-of: farm-association
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0     # під час оновлення завжди є робочі поди
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: farm-web
+  template:
+    metadata:
+      labels:
+        app: farm-web
+        app.kubernetes.io/part-of: farm-association
+    spec:
+      initContainers:
+        # чекаємо, поки база прийматиме з'єднання
+        - name: wait-for-db
+          image: postgres:15-alpine
+          command: ["sh", "-c", "until pg_isready -h $PG_HOST -p $PG_PORT; do echo waiting for db; sleep 2; done"]
+          envFrom:
+            - configMapRef: { name: farm-config }
+      containers:
+        - name: web
+          image: farm-association:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          envFrom:
+            - configMapRef: { name: farm-config }
+            - secretRef: { name: farm-secret }
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 256Mi }
+          readinessProbe:
+            httpGet: { path: /health, port: 5000 }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /health, port: 5000 }
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3

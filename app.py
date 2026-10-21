@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from flask import Flask, session
 from sqlalchemy.engine import URL
-
+import socket
 from extensions import db
 from models import Specialization, User
 from routes import register_routes
@@ -66,6 +66,13 @@ def create_app():
 
 
 app = create_app()
+
+APP_VERSION = "1.0.0"
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok", "version": APP_VERSION, "pod": socket.gethostname()}
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: farm-config
+  namespace: farm-association
+  labels:
+    app.kubernetes.io/part-of: farm-association
+data:
+  PG_HOST: "postgres"
+  PG_PORT: "5432"
+  PG_DATABASE: "farm_db"
+  PG_USER: "postgres"

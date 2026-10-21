@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: farm-web
+  namespace: farm-association
+  labels:
+    app: farm-web
+    app.kubernetes.io/part-of: farm-association
+spec:
+  type: ClusterIP
+  selector:
+    app: farm-web
+  ports:
+    - port: 80
+      targetPort: 5000

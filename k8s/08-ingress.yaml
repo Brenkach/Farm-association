@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: farm-web
+  namespace: farm-association
+  labels:
+    app: farm-web
+    app.kubernetes.io/part-of: farm-association
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: farm.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: farm-web
+                port:
+                  number: 80
