@@ -53,25 +53,26 @@ jobs:
       matrix:
         suite: [unit, integration]
 
+    # параметри збігаються з tests/conftest.py
     services:
       postgres:
-        image: postgres:16
+        image: postgres:15-alpine
         env:
-          POSTGRES_USER: farm
-          POSTGRES_PASSWORD: farm
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
           POSTGRES_DB: farm_test
-        ports: ["5432:5432"]
+        ports: ["5433:5432"]
         options: >-
-          --health-cmd "pg_isready -U farm"
+          --health-cmd "pg_isready -U postgres"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
 
     env:
       PG_HOST: localhost
-      PG_PORT: "5432"
-      PG_USER: farm
-      PG_PASSWORD: farm
+      PG_PORT: "5433"
+      PG_USER: postgres
+      PG_PASSWORD: postgrespassword
       PG_DATABASE: farm_test
       SECRET_KEY: ci-secret
 
@@ -88,7 +89,8 @@ jobs:
 
       - name: Build
         run: |
-          pip install -r requirements.txt && pip install -r requirements-dev.txt
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
           python -m compileall -q .
           python -c "from app import create_app; print('app import OK')"
 
