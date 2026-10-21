@@ -2,7 +2,7 @@ name: CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [Devops]
   push:
     branches: [main, Devops]
 
@@ -114,7 +114,7 @@ jobs:
           images: ${{ env.IMAGE_NAME }}
           tags: |
             type=sha,format=long
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/Devops' }}
 
       - name: Build image (local only)
         uses: docker/build-push-action@v6
