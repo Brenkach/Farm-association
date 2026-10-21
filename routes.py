@@ -343,7 +343,7 @@ def register_routes(app):
                     new_pt = ProductType(
                         name=name,
                         specialization_id=specialization_id,
-                        product_name=product_name
+                        product_name=product_name,
                     )
                     db.session.add(new_pt)
                     db.session.commit()
@@ -361,20 +361,16 @@ def register_routes(app):
             items = ProductType.query.filter_by(name=farm.name).all()
 
         return render_template(
-            "product_types.html",
-            items=items,
-            specs=specs,
-            msg=msg,
-            role=role
+            "product_types.html", items=items, specs=specs, msg=msg, role=role
         )
-
-
 
     # ======================================================================
     #                   ATTRIBUTES — ONLY COLOR + WEIGHT
     # ======================================================================
 
-    @app.route("/product-types/<int:product_type_id>/attributes", methods=["GET", "POST"])
+    @app.route(
+        "/product-types/<int:product_type_id>/attributes", methods=["GET", "POST"]
+    )
     @require_roles("superuser", "farmer")
     def product_type_attributes(product_type_id):
         from models import Farm, ProductAttribute, ProductType
@@ -401,21 +397,29 @@ def register_routes(app):
             else:
                 try:
                     if color:
-                        db.session.add(ProductAttribute(
-                            product_type_id=product_type_id,
-                            attribute_name="Колір",
-                            attribute_value=color
-                        ))
+                        db.session.add(
+                            ProductAttribute(
+                                product_type_id=product_type_id,
+                                attribute_name="Колір",
+                                attribute_value=color,
+                            )
+                        )
 
                     if weight:
-                        db.session.add(ProductAttribute(
-                            product_type_id=product_type_id,
-                            attribute_name="Вага",
-                            attribute_value=weight
-                        ))
+                        db.session.add(
+                            ProductAttribute(
+                                product_type_id=product_type_id,
+                                attribute_name="Вага",
+                                attribute_value=weight,
+                            )
+                        )
 
                     db.session.commit()
-                    return redirect(url_for("product_type_attributes", product_type_id=product_type_id))
+                    return redirect(
+                        url_for(
+                            "product_type_attributes", product_type_id=product_type_id
+                        )
+                    )
 
                 except Exception as e:
                     db.session.rollback()
@@ -424,10 +428,7 @@ def register_routes(app):
         attrs = ProductAttribute.query.filter_by(product_type_id=product_type_id).all()
 
         return render_template(
-            "product_type_attributes.html",
-            pt=pt,
-            attrs=attrs,
-            msg=msg
+            "product_type_attributes.html", pt=pt, attrs=attrs, msg=msg
         )
 
     # ======================================================================
@@ -457,7 +458,9 @@ def register_routes(app):
             try:
                 if role == "superuser":
                     pt.name = request.form.get("name", "").strip()
-                    pt.specialization_id = request.form.get("specialization_id", type=int)
+                    pt.specialization_id = request.form.get(
+                        "specialization_id", type=int
+                    )
 
                 pt.product_name = request.form.get("product_name", "").strip()
 
@@ -469,11 +472,7 @@ def register_routes(app):
                 msg = f"Помилка оновлення: {e}"
 
         return render_template(
-            "product_type_edit.html",
-            pt=pt,
-            specs=specs,
-            role=role,
-            msg=msg
+            "product_type_edit.html", pt=pt, specs=specs, role=role, msg=msg
         )
 
     # ======================================================================
@@ -531,7 +530,9 @@ def register_routes(app):
             db.session.rollback()
             return f"Помилка: {e}", 500
 
-        return redirect(url_for("product_type_attributes", product_type_id=pt.product_type_id))
+        return redirect(
+            url_for("product_type_attributes", product_type_id=pt.product_type_id)
+        )
 
     # ---------------- OFFERS ----------------
 
@@ -620,14 +621,11 @@ def register_routes(app):
             if not msg:
                 try:
                     # автоматичне створення ProductType (за господарством)
-                    pt = (
-                        ProductType.query.filter_by(
-                            name=farm_obj.name,
-                            specialization_id=farm_obj.specialization_id,
-                            product_name=product_name,
-                        )
-                        .first()
-                    )
+                    pt = ProductType.query.filter_by(
+                        name=farm_obj.name,
+                        specialization_id=farm_obj.specialization_id,
+                        product_name=product_name,
+                    ).first()
 
                     if not pt:
                         pt = ProductType(
@@ -765,9 +763,7 @@ def register_routes(app):
                 offer.quantity_available = request.form.get(
                     "quantity_available", type=float
                 )
-                offer.shelf_life_days = request.form.get(
-                    "shelf_life_days", type=int
-                )
+                offer.shelf_life_days = request.form.get("shelf_life_days", type=int)
                 offer.note = request.form.get("note")
 
                 produced_at = request.form.get("produced_at")
@@ -797,11 +793,8 @@ def register_routes(app):
 
         # ---------- POST: створення працівника ----------
         if request.method == "POST":
-
             farm_id = (
-                request.form.get("farm_id")
-                if role == "superuser"
-                else current_farm_id
+                request.form.get("farm_id") if role == "superuser" else current_farm_id
             )
 
             full_name = request.form.get("full_name")
@@ -815,11 +808,7 @@ def register_routes(app):
             password = request.form.get("account_password")
 
             try:
-                hire_date = (
-                    date.fromisoformat(hire_date_str)
-                    if hire_date_str
-                    else None
-                )
+                hire_date = date.fromisoformat(hire_date_str) if hire_date_str else None
                 monthly_salary = (
                     float(monthly_salary_str) if monthly_salary_str else None
                 )
@@ -851,9 +840,7 @@ def register_routes(app):
                 return render_template(
                     "employees.html",
                     farms=farms,
-                    items=Employee.query.filter(
-                        Employee.farm_id == farm_id
-                    ).all(),
+                    items=Employee.query.filter(Employee.farm_id == farm_id).all(),
                     new_worker=emp,
                     new_password=password,
                     role=role,
@@ -995,8 +982,7 @@ def register_routes(app):
                 .join(ProductOffer, ProductOffer.farm_id == Farm.farm_id)
                 .join(
                     ProductType,
-                    ProductOffer.product_type_id
-                    == ProductType.product_type_id,
+                    ProductOffer.product_type_id == ProductType.product_type_id,
                 )
                 .filter(ProductOffer.product_type_id == q1_product_type_id)
             )
@@ -1054,8 +1040,7 @@ def register_routes(app):
                     db.session.query(ProductOffer, ProductType)
                     .join(
                         ProductType,
-                        ProductOffer.product_type_id
-                        == ProductType.product_type_id,
+                        ProductOffer.product_type_id == ProductType.product_type_id,
                     )
                     .filter(ProductOffer.farm_id == q4_farm_id)
                 )
@@ -1076,8 +1061,7 @@ def register_routes(app):
                 .join(ProductOffer, ProductOffer.farm_id == Farm.farm_id)
                 .join(
                     ProductType,
-                    ProductOffer.product_type_id
-                    == ProductType.product_type_id,
+                    ProductOffer.product_type_id == ProductType.product_type_id,
                 )
                 .filter(ProductOffer.product_type_id == q5_product_type_id)
             )
@@ -1092,28 +1076,21 @@ def register_routes(app):
             q5_rows = base.order_by(Farm.name).all()
 
             # Агрегація
-            agg = (
-                db.session.query(
-                    func.coalesce(
-                        func.sum(ProductOffer.quantity_available), 0
-                    ).label("total_qty"),
-                    func.avg(ProductOffer.unit_price).label("avg_price"),
-                    func.coalesce(
-                        func.sum(
-                            ProductOffer.quantity_available
-                            * ProductOffer.unit_price
-                        ),
-                        0,
-                    ).label("total_value"),
-                )
-                .filter(ProductOffer.product_type_id == q5_product_type_id)
-            )
+            agg = db.session.query(
+                func.coalesce(func.sum(ProductOffer.quantity_available), 0).label(
+                    "total_qty"
+                ),
+                func.avg(ProductOffer.unit_price).label("avg_price"),
+                func.coalesce(
+                    func.sum(ProductOffer.quantity_available * ProductOffer.unit_price),
+                    0,
+                ).label("total_value"),
+            ).filter(ProductOffer.product_type_id == q5_product_type_id)
 
             # ---- worker → обмежуємо ----
             if role == "worker" and user_farm_id:
-                agg = (
-                    agg.join(Farm, ProductOffer.farm_id == Farm.farm_id)
-                    .filter(Farm.farm_id == user_farm_id)
+                agg = agg.join(Farm, ProductOffer.farm_id == Farm.farm_id).filter(
+                    Farm.farm_id == user_farm_id
                 )
 
             # ---- farmer → НЕ обмежуємо ----
@@ -1138,8 +1115,7 @@ def register_routes(app):
                 db.session.query(ProductType)
                 .join(
                     ProductOffer,
-                    ProductOffer.product_type_id
-                    == ProductType.product_type_id,
+                    ProductOffer.product_type_id == ProductType.product_type_id,
                 )
                 .filter(ProductOffer.farm_id == q6_farm_id)
                 .distinct()
@@ -1169,8 +1145,7 @@ def register_routes(app):
                     .join(Farm, ProductOffer.farm_id == Farm.farm_id)
                     .join(
                         ProductType,
-                        ProductOffer.product_type_id
-                        == ProductType.product_type_id,
+                        ProductOffer.product_type_id == ProductType.product_type_id,
                     )
                     .filter(
                         ProductOffer.product_type_id == q7_product_type_id,
@@ -1198,14 +1173,11 @@ def register_routes(app):
         base9 = (
             db.session.query(
                 Farm.name,
+                func.coalesce(func.sum(ProductOffer.quantity_available), 0).label(
+                    "total_qty"
+                ),
                 func.coalesce(
-                    func.sum(ProductOffer.quantity_available), 0
-                ).label("total_qty"),
-                func.coalesce(
-                    func.sum(
-                        ProductOffer.quantity_available
-                        * ProductOffer.unit_price
-                    ),
+                    func.sum(ProductOffer.quantity_available * ProductOffer.unit_price),
                     0,
                 ).label("total_value"),
             )
@@ -1218,9 +1190,7 @@ def register_routes(app):
 
         # фермер для рейтингу бачить всі господарства
         q9_rows = base9.order_by(
-            func.sum(
-                ProductOffer.quantity_available * ProductOffer.unit_price
-            ).desc()
+            func.sum(ProductOffer.quantity_available * ProductOffer.unit_price).desc()
         ).all()
 
         # ================== Q10 ==================
@@ -1229,9 +1199,7 @@ def register_routes(app):
         base10 = (
             db.session.query(
                 func.date_part("year", ProductOffer.produced_at).label("y"),
-                func.date_part("quarter", ProductOffer.produced_at).label(
-                    "q"
-                ),
+                func.date_part("quarter", ProductOffer.produced_at).label("q"),
                 func.sum(
                     ProductOffer.quantity_available * ProductOffer.unit_price
                 ).label("total"),
@@ -1242,9 +1210,8 @@ def register_routes(app):
         )
 
         if role == "worker" and user_farm_id:
-            base10 = (
-                base10.join(Farm, ProductOffer.farm_id == Farm.farm_id)
-                .filter(Farm.farm_id == user_farm_id)
+            base10 = base10.join(Farm, ProductOffer.farm_id == Farm.farm_id).filter(
+                Farm.farm_id == user_farm_id
             )
 
         q10_labels = []

@@ -12,6 +12,7 @@ def require_roles(*roles):
     Якщо користувач не авторизований – редірект на /login.
     Якщо роль не підходить – редірект на /forbidden.
     """
+
     def decorator(view_func):
         @wraps(view_func)
         def wrapper(*args, **kwargs):

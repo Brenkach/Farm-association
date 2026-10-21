@@ -1,0 +1,72 @@
+{
+  "meta": {
+    "file": "routes.py",
+    "file_sha256": "256d091a8476b9eb",
+    "python": "3.12.15",
+    "platform": "Linux-7.0.12-linuxkit-aarch64-with-glibc2.41",
+    "radon": "6.0.1",
+    "lizard": "1.24.1"
+  },
+  "results": {
+    "A0_original": {
+      "radon_blocks": 6,
+      "radon_cc_avg": 2.333,
+      "radon_cc_max": 6,
+      "radon_loc": 1355,
+      "radon_sloc": 1015,
+      "radon_lloc": 675,
+      "radon_comments": 93,
+      "radon_blank": 253,
+      "lizard_nloc": 1005,
+      "lizard_functions": 28,
+      "lizard_ccn_max": 51,
+      "lizard_ccn_avg": 7.5,
+      "lizard_over_15": 2
+    },
+    "A1_LF": {
+      "radon_blocks": 6,
+      "radon_cc_avg": 2.333,
+      "radon_cc_max": 6,
+      "radon_loc": 1355,
+      "radon_sloc": 1015,
+      "radon_lloc": 675,
+      "radon_comments": 93,
+      "radon_blank": 253,
+      "lizard_nloc": 1005,
+      "lizard_functions": 28,
+      "lizard_ccn_max": 51,
+      "lizard_ccn_avg": 7.5,
+      "lizard_over_15": 2
+    },
+    "A2_CRLF": {
+      "radon_blocks": 6,
+      "radon_cc_avg": 2.333,
+      "radon_cc_max": 6,
+      "radon_loc": 1355,
+      "radon_sloc": 1015,
+      "radon_lloc": 675,
+      "radon_comments": 93,
+      "radon_blank": 253,
+      "lizard_nloc": 1005,
+      "lizard_functions": 28,
+      "lizard_ccn_max": 51,
+      "lizard_ccn_avg": 7.5,
+      "lizard_over_15": 2
+    },
+    "A3_UTF8_BOM": {
+      "radon_blocks": "ERROR",
+      "radon_cc_avg": "ERROR",
+      "radon_cc_max": "ERROR",
+      "radon_loc": "ERROR",
+      "radon_sloc": "ERROR",
+      "radon_lloc": "ERROR",
+      "radon_comments": "ERROR",
+      "radon_blank": "ERROR",
+      "lizard_nloc": 1005,
+      "lizard_functions": 28,
+      "lizard_ccn_max": 51,
+      "lizard_ccn_avg": 7.5,
+      "lizard_over_15": 2
+    }
+  }
+}

@@ -6,6 +6,7 @@ from extensions import db
 
 # ---------------- USERS ----------------
 
+
 class User(db.Model):
     __tablename__ = "users"
 
@@ -19,7 +20,9 @@ class User(db.Model):
 
     # методи роботи з паролем
     def set_password(self, raw_password: str):
-        self.password_hash = generate_password_hash(raw_password, method='pbkdf2:sha256')
+        self.password_hash = generate_password_hash(
+            raw_password, method="pbkdf2:sha256"
+        )
 
     def check_password(self, raw_password: str) -> bool:
         if not self.password_hash:
@@ -28,6 +31,7 @@ class User(db.Model):
 
 
 # ---------------- SPECIALIZATIONS ----------------
+
 
 class Specialization(db.Model):
     __tablename__ = "specializations"
@@ -44,6 +48,7 @@ class Specialization(db.Model):
 
 
 # ---------------- FARMS ----------------
+
 
 class Farm(db.Model):
     __tablename__ = "farms"
@@ -89,6 +94,7 @@ class Farm(db.Model):
 
 # ---------------- PRODUCT TYPES ----------------
 
+
 class ProductType(db.Model):
     __tablename__ = "product_types"
 
@@ -125,6 +131,7 @@ class ProductType(db.Model):
 
 
 # ---------------- PRODUCT OFFERS ----------------
+
 
 class ProductOffer(db.Model):
     __tablename__ = "product_offers"
@@ -169,6 +176,7 @@ class ProductOffer(db.Model):
 
 # ---------------- EMPLOYEES ----------------
 
+
 class Employee(db.Model):
     __tablename__ = "employees"
 
@@ -193,6 +201,7 @@ class Employee(db.Model):
 
 # ---------------- PRODUCT ATTRIBUTES ----------------
 
+
 class ProductAttribute(db.Model):
     __tablename__ = "product_attributes"
 
@@ -200,9 +209,7 @@ class ProductAttribute(db.Model):
 
     # FK → product_types.product_type_id
     product_type_id = db.Column(
-        db.Integer,
-        db.ForeignKey("product_types.product_type_id"),
-        nullable=False
+        db.Integer, db.ForeignKey("product_types.product_type_id"), nullable=False
     )
 
     # Назва атрибута (Колір / Вага)
@@ -216,6 +223,7 @@ class ProductAttribute(db.Model):
 
 
 # ---------------- PRODUCT OFFER VALUES ----------------
+
 
 class ProductOfferValue(db.Model):
     __tablename__ = "product_offer_values"

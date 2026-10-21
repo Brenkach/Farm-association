@@ -1,0 +1,79 @@
+{
+  "meta": {
+    "label": "baseline",
+    "cpu_limit": 0.0,
+    "base": "http://localhost:5001",
+    "path": "/farms",
+    "requests": 200,
+    "workers": 50,
+    "python": "3.9.6",
+    "time": "2026-10-18T16:38:21"
+  },
+  "runs": [
+    {
+      "p50_ms": 140.2,
+      "p95_ms": 183.1,
+      "p99_ms": 193.1,
+      "mean_ms": 143.2,
+      "max_ms": 197.6,
+      "error_pct": 0.0,
+      "rps": 303.7,
+      "gate": "PASS",
+      "ram_mb": 97.9
+    },
+    {
+      "p50_ms": 145.0,
+      "p95_ms": 205.0,
+      "p99_ms": 219.8,
+      "mean_ms": 144.5,
+      "max_ms": 223.9,
+      "error_pct": 0.0,
+      "rps": 302.4,
+      "gate": "FAIL",
+      "ram_mb": 100.4
+    },
+    {
+      "p50_ms": 146.8,
+      "p95_ms": 204.1,
+      "p99_ms": 228.2,
+      "mean_ms": 149.0,
+      "max_ms": 257.1,
+      "error_pct": 0.0,
+      "rps": 288.6,
+      "gate": "FAIL",
+      "ram_mb": 111.0
+    },
+    {
+      "p50_ms": 130.9,
+      "p95_ms": 233.6,
+      "p99_ms": 267.2,
+      "mean_ms": 143.2,
+      "max_ms": 282.6,
+      "error_pct": 0.0,
+      "rps": 295.9,
+      "gate": "FAIL",
+      "ram_mb": 111.0
+    },
+    {
+      "p50_ms": 147.8,
+      "p95_ms": 211.5,
+      "p99_ms": 224.7,
+      "mean_ms": 149.3,
+      "max_ms": 238.1,
+      "error_pct": 0.0,
+      "rps": 291.7,
+      "gate": "FAIL",
+      "ram_mb": 112.3
+    }
+  ],
+  "summary": {
+    "p95_median": 205.0,
+    "p95_min": 183.1,
+    "p95_max": 233.6,
+    "p95_cv_pct": 7.8,
+    "error_max_pct": 0.0,
+    "ram_mb": 112.3,
+    "gate_fail": 4,
+    "runs": 5
+  }
+}

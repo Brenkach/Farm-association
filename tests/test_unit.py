@@ -44,4 +44,7 @@ def test_offer_best_before():
 
 
 def test_offer_best_before_none_without_shelf_life():
-    assert ProductOffer(produced_at=date(2026, 1, 1), shelf_life_days=None).best_before is None
+    assert (
+        ProductOffer(produced_at=date(2026, 1, 1), shelf_life_days=None).best_before
+        is None
+    )
