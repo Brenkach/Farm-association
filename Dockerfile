@@ -7,7 +7,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --only-binary :all: --require-hashes -r requirements.txt
 
 # Копіюємо лише потрібні файли, а не весь контекст
-COPY app.py extensions.py models.py routes.py services.py privacy_logging.py consent.py personal_data.py anonymization.py ./
+COPY app.py extensions.py models.py routes.py services.py privacy_logging.py consent.py personal_data.py anonymization.py farm_rules.py ./
 COPY templates/ templates/
 COPY static/ static/
 
