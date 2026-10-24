@@ -295,6 +295,12 @@ def register_routes(app):
 
                         if expires_dt < issued_dt:
                             msg = "Дата завершення дозволу не може бути раніше дати видачі!"
+                        elif (expires_dt - issued_dt).days > 5 * 365:
+                            msg = "Термін дозволу не може перевищувати 5 років!"
+                        elif expires_dt < date.today():
+                            msg = "Дозвіл уже прострочений!"
+                        elif not request.form.get("region") or not request.form.get("farmer_fullname"):
+                            msg = "Вкажіть регіон і ПІБ фермера!"
 
                     if not msg:
                         try:
