@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+# =============================================================================
+# Git pre-commit hook: «воротар якості» (Лаб. 6, завдання 3)
+# Блокує коміт, якщо в staged .py-файлах є функція з цикломатичною складністю CC > LIMIT.
+#   - перевіряється саме те, що йде в коміт (staged-версія файлів, а не робоча копія);
+#   - сканер: Lizard, Exit Code 1 при порушенні -> Git скасовує коміт;
+#   - відомий старий борг лежить у whitelizard.txt (не блокує, але й не росте непомітно).
+# Обхід у крайньому випадку: git commit --no-verify
+# =============================================================================
+LIMIT="${CC_LIMIT:-10}"
+RED=$'\033[1;31m'; GREEN=$'\033[1;32m'; YELLOW=$'\033[1;33m'; RESET=$'\033[0m'
+
+ROOT="$(git rev-parse --show-toplevel)" || exit 1
+cd "$ROOT" || exit 1
+
+# 1. Список файлів, підготовлених до коміту (staged: додані, змінені, перейменовані)
+STAGED="$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.py$')"
+if [ -z "$STAGED" ]; then
+  echo "${GREEN}[pre-commit]${RESET} змінених .py-файлів немає, перевірку складності пропущено"
+  exit 0
+fi
+
+# 2. Сканер: venv проєкту має пріоритет (IDE запускає git без активованого venv)
+if [ -x "$ROOT/.venv/bin/lizard" ]; then
+  LIZARD=("$ROOT/.venv/bin/lizard")
+elif command -v lizard >/dev/null 2>&1; then
+  LIZARD=(lizard)
+elif command -v python3 >/dev/null 2>&1 && python3 -m lizard --version >/dev/null 2>&1; then
+  LIZARD=(python3 -m lizard)
+else
+  echo "${RED}[pre-commit] lizard не знайдено${RESET}: встановіть його (pip install lizard)"
+  exit 1
+fi
+
+# 3. Копіюємо у тимчасову теку саме staged-вміст кожного файлу
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+FILES=()
+while IFS= read -r f; do
+  mkdir -p "$TMP/$(dirname "$f")"
+  git show ":$f" > "$TMP/$f"
+  FILES+=("$f")
+done <<< "$STAGED"
+[ -f "$ROOT/whitelizard.txt" ] && cp "$ROOT/whitelizard.txt" "$TMP/whitelizard.txt"
+
+# 4. Сканування лише змінених файлів і зчитування Exit Code
+cd "$TMP" || exit 1
+# -L 100000 вимикає перевірку довжини функції: хук контролює лише цикломатичну складність
+OUTPUT="$("${LIZARD[@]}" -C "$LIMIT" -L 100000 -w "${FILES[@]}" 2>&1)"
+STATUS=$?
+
+# 5. Рішення: Exit Code 1 скасовує коміт, 0 пропускає
+if [ "$STATUS" -ne 0 ]; then
+  echo ""
+  echo "${RED}✖ pre-commit: КОМІТ ЗАБЛОКОВАНО${RESET}"
+  echo "${RED}Цикломатична складність перевищує ліміт CC > ${LIMIT}:${RESET}"
+  echo "$OUTPUT" | sed "s/^/  ${RED}▸${RESET} /"
+  echo ""
+  echo "${YELLOW}Спростіть функцію (напр., Data-Driven рефакторинг через Lookup Table),"
+  echo "потім повторіть git add і git commit.${RESET}"
+  exit 1
+fi
+
+echo "${GREEN}[pre-commit] ✔ складність у нормі (CC ≤ ${LIMIT}) для ${#FILES[@]} файл(ів), коміт дозволено${RESET}"
+exit 0
