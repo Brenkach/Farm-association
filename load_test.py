@@ -1,11 +1,12 @@
+import os
 import sys
 import time
 import requests
 from concurrent.futures import ThreadPoolExecutor
 
-BASE_URL = "http://127.0.0.1:5000"
+BASE_URL = "http://127.0.0.1:5001"
 LOGIN = "admin"
-PASSWORD = "admin123"
+PASSWORD = os.environ["ADMIN_PASSWORD"]
 
 SLO_P95_MS = 200
 SLO_ERROR_RATE = 1.0

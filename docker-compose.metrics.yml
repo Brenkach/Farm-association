@@ -1,0 +1,19 @@
+# Ізольований запуск вимірювань із жорсткими лімітами ресурсів (Лаб. 5).
+# Запуск: docker compose -f docker-compose.metrics.yml run --rm metrics
+services:
+  metrics:
+    build:
+      context: .
+      dockerfile: Dockerfile.metrics
+    image: farm-metrics:pinned
+    working_dir: /work/experiments
+    command: ["python", "exp1_reliability.py", "../routes.py"]
+    cpus: 1.0            # стеля CPU: однакові умови для кожного запуску
+    mem_limit: 512m      # стеля RAM
+    network_mode: none   # жодних мережевих шумів
+    read_only: true      # коренева ФС лише для читання
+    tmpfs:
+      - /tmp
+    volumes:
+      - ./:/work:ro
+      - ./experiments/results:/work/experiments/results:rw
