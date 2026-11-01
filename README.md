@@ -1,47 +1,212 @@
-# Документація проєкту «Сусід»
+# Farm-association
 
-Веб-платформа локальних послуг із районним рейтингом довіри, стійким до накрутки відгуків.
+Веб-застосунок на Flask + PostgreSQL.
 
-## Навігація
+## Розгортання в Kubernetes (minikube)
 
-| Документ | Опис |
-|---|---|
-| [Розділ 1 (локальний .docx)](./F2_Diploma_Chapter1_Brenkach.docx) | Аналіз предметної області та постановка задачі |
-| Розділ 1 (хмарний файл, режим «Can comment») | ВСТАВИТИ_ПОСИЛАННЯ_НА_GOOGLE_DOCS |
-| [1_analysis.md](./1_analysis.md) | Аналіз аналогів, модель To-Be, Core Features, NFRs у Markdown |
+Маніфести лежать у каталозі `k8s/`, по одному файлу на об'єкт. Номер у назві файлу задає порядок створення.
 
-## Матриця нефункціональних вимог (NFRs)
+| Файл | Об'єкт |
+| --- | --- |
+| `00-namespace.yaml` | Namespace `farm-association` |
+| `01-configmap.yaml` | ConfigMap `farm-config` |
+| `02-secret.yaml` | Secret `farm-secret` |
+| `03-postgres-pvc.yaml` | PersistentVolumeClaim `postgres-data` (1 Gi) |
+| `04-postgres-deployment.yaml` | Deployment `postgres` |
+| `05-postgres-service.yaml` | Service `postgres` (ClusterIP, 5432) |
+| `06-app-deployment.yaml` | Deployment `farm-web` (2 репліки, проби, ліміти) |
+| `07-app-service.yaml` | Service `farm-web` (ClusterIP, 80 → 5000) |
+| `08-ingress.yaml` | Ingress `farm-web` (host `farm.local`) |
 
-Цільовий вузол: 4 vCPU, 8 ГБ RAM, SSD, Docker Compose. Навантаження вимірюється засобом k6. Значення є цільовими й підлягають верифікації у Розділі 3.
+### Порядок розгортання
 
-| ID | Категорія | Вимога | Метод перевірки |
-|---|---|---|---|
-| NFR-P1 | Продуктивність | Запит каталогу (кешований у Redis): Latency p95 ≤ 200 мс при 200 RPS протягом 10 хв | k6, сценарій навантаження |
-| NFR-P2 | Продуктивність | Пошук за текстовим запитом (pg_trgm, без кешу): Latency p95 ≤ 400 мс при 50 RPS | k6 |
-| NFR-P3 | Продуктивність | Операції запису (створення замовлення, зміна статусу): Latency p95 ≤ 500 мс при 20 RPS | k6 |
-| NFR-P4 | Продуктивність | Частка відповідей 5xx < 1 % під час усіх навантажувальних сценаріїв | k6, Prometheus |
-| NFR-A1 | Асинхронність | Затримка від фіксації транзакції до появи події в черзі (Outbox lag): p95 ≤ 5 с | Метрика Prometheus |
-| NFR-A2 | Асинхронність | Оновлення рейтингу після підтвердження замовлення: p95 ≤ 30 с | Інтеграційний тест, метрика |
-| NFR-A3 | Асинхронність | Аналіз однієї фотографії ≤ 60 с на CPU вузла; виконання не збільшує Latency p95 API більше ніж на 10 % | k6 з паралельним аналізом |
-| NFR-A4 | Надійність подій | Втрата подій = 0 при примусовому перезапуску Redis і воркера; семантика «щонайменше один раз», ідемпотентні споживачі | Інтеграційний тест відмов |
-| NFR-S1 | Масштабованість | Підтримка 10 000 користувачів, 2 000 майстрів, 100 000 відгуків на одному вузлі; перерахунок графових ознак для 100 000 ребер ≤ 60 с | Генератор даних, замір часу |
-| NFR-SEC1 | Безпека | Паролі зберігаються як хеші Argon2id; токени JWT підписуються RS256, TTL access-токена 15 хв, refresh-токена 7 діб з ротацією | Огляд конфігурації, pytest |
-| NFR-SEC2 | Безпека | Перевірка прав доступу на 100 % захищених ендпоінтів (OWASP A01), підтверджена негативними тестами авторизації | pytest |
-| NFR-SEC3 | Безпека | Передача даних лише через TLS 1.2+ (Nginx); обмеження частоти запитів 100 запитів/хв на IP для публічних ендпоінтів | Тест конфігурації |
-| NFR-SEC4 | Безпека | Образи Docker без вразливостей рівня CRITICAL за результатами Trivy (умова проходження CI) | Trivy у GitHub Actions |
-| NFR-SEC5 | Комплаєнс | Видалення EXIF із завантажених фото; строк зберігання фото ≤ 180 діб; анонімізація персональних даних при видаленні акаунта ≤ 30 діб (принципи GDPR ст. 5, 17) | pytest, огляд задач очищення |
-| NFR-R1 | Надійність | RPO ≤ 15 хв (архівування WAL), RTO ≤ 60 хв; щоденне повне резервне копіювання, зберігання 7 копій | Тест відновлення |
-| NFR-R2 | Надійність | Запуск усієї системи однією командою `docker compose up`; автоматичний перезапуск контейнерів, перевірки стану (healthcheck) | Огляд конфігурації |
-| NFR-R3 | Ізоляція відмов | Недоступність Telegram API не збільшує Latency p95 основного API більше ніж на 10 % | Тест із відключенням Telegram |
-| NFR-Q1 | Супроводжуваність | Покриття тестами (pytest-cov): модулі рейтингу та автомата замовлень ≥ 85 %, загальне ≥ 70 % | pytest-cov |
-| NFR-Q2 | Супроводжуваність | SonarQube Quality Gate: 0 Blocker/Critical, дублювання коду < 3 % | SonarQube |
-| NFR-Q3 | Супроводжуваність | 100 % ендпоінтів REST API описано специфікацією OpenAPI 3.x | Flask-Smorest, валідація схеми |
-| NFR-O1 | Спостережуваність | Метрики Prometheus (histogram Latency, довжина черг, Outbox lag), дашборд Grafana; сповіщення при Outbox lag > 60 с | Prometheus, Grafana |
-| NFR-M1 | Якість алгоритмів | Виявлення накруток на синтетичному датасеті: precision ≥ 0.80, recall ≥ 0.70, у тому числі на накрутках з параметрами, не використаними при навчанні | scikit-learn, оцінка метрик |
-| NFR-M2 | Якість алгоритмів | Класифікація типу несправності за фото на тестовому наборі з 30-50 зображень: top-1 accuracy ≥ 0.60, top-3 accuracy ≥ 0.80 | Експеримент з еталонною розміткою |
+1. Запустити кластер і увімкнути доповнення:
 
-## Ключові архітектурні обмеження
+   ```bash
+   minikube start --driver=docker
+   minikube addons enable metrics-server
+   minikube addons enable ingress
+   ```
 
-- Модульний моноліт на Python/Flask, PostgreSQL як єдине джерело істини.
-- Transactional Outbox, асинхронні воркери Celery з брокером Redis.
-- Масштабування вертикальне в межах одного вузла (визнане обмеження).
+2. Зібрати образи застосунку і завантажити їх у minikube (тег `latest` не використовується):
+
+   ```bash
+   docker build --load -t farm-association:1.0.0 .
+   minikube image load farm-association:1.0.0
+   ```
+
+   Версія 1.1.0 збирається так само після зміни `APP_VERSION` в `app.py`.
+
+3. Застосувати всі маніфести однією командою:
+
+   ```bash
+   kubectl apply -f k8s/
+   kubectl get pods -n farm-association -w
+   ```
+
+4. Відкрити доступ із хоста. В окремому терміналі запустити тунель і не закривати його:
+
+   ```bash
+   minikube tunnel
+   ```
+
+   Додати домен у `/etc/hosts`:
+
+   ```bash
+   echo "127.0.0.1 farm.local" | sudo tee -a /etc/hosts
+   ```
+
+   Застосунок доступний за адресою http://farm.local, перевірка стану — http://farm.local/health.
+
+### Параметри конфігурації
+
+**ConfigMap `farm-config`** (передається в контейнер як змінні оточення):
+
+| Параметр | Значення | Призначення |
+| --- | --- | --- |
+| `PG_HOST` | `postgres` | ім'я Service бази даних |
+| `PG_PORT` | `5432` | порт PostgreSQL |
+| `PG_DATABASE` | `farm_db` | назва бази даних |
+| `PG_USER` | `postgres` | користувач бази даних |
+
+**Secret `farm-secret`** (передається як змінні оточення):
+
+| Параметр | Призначення |
+| --- | --- |
+| `PG_PASSWORD` | пароль користувача PostgreSQL (також використовується контейнером `postgres`) |
+| `SECRET_KEY` | секретний ключ Flask для підпису сесій |
+
+Значення в Secret навчальні й не збігаються з паролями реальних систем.
+
+### Корисні команди
+
+```bash
+# стан об'єктів
+kubectl get pods,deploy,rs,svc,ingress,pvc -n farm-association
+
+# оновлення версії та відкат
+kubectl set image deployment/farm-web web=farm-association:1.1.0 -n farm-association
+kubectl rollout status deployment/farm-web -n farm-association
+kubectl rollout history deployment/farm-web -n farm-association
+kubectl rollout undo deployment/farm-web -n farm-association
+
+# видалення всього
+kubectl delete -f k8s/
+```
+
+## Розгортання через Helm
+
+Чарт лежить у каталозі `helm/farm-association`. Він створює той самий набір об'єктів, що й маніфести з `k8s/`, але імена об'єктів будуються з імені релізу, а всі параметри винесено у values.
+
+```
+helm/farm-association/
+├── Chart.yaml
+├── values.yaml           # значення за замовчуванням (середовище розробки)
+├── values-dev.yaml       # середовище розробки
+├── values-prod.yaml      # продакшн-середовище
+└── templates/
+    ├── _helpers.tpl      # спільні шаблони: імена та мітки
+    ├── NOTES.txt         # підказка після встановлення
+    ├── configmap.yaml
+    ├── secret.yaml
+    ├── deployment.yaml
+    ├── service.yaml
+    ├── ingress.yaml              # створюється, якщо ingress.enabled
+    ├── postgres-deployment.yaml
+    ├── postgres-service.yaml
+    ├── postgres-pvc.yaml         # створюється, якщо postgres.persistence.enabled
+    ├── pre-upgrade-job.yaml      # хук pre-upgrade
+    └── tests/test-health.yaml    # тест для helm test
+```
+
+### version і appVersion
+
+У `Chart.yaml` є дві різні версії:
+
+- `version` — версія самого чарта, тобто шаблонів і значень за замовчуванням. Її змінюють, коли змінюється чарт: додано шаблон, змінено мітки, політику хуків тощо. Наприклад, зміна політики видалення хуків підняла версію чарта з 0.1.0 до 0.1.1, хоча сам застосунок не змінився.
+- `appVersion` — версія застосунку, яку чарт розгортає за замовчуванням (тег Docker-образу `farm-association`). Зараз це `1.0.0`. Якщо в values задано `image.tag`, розгортається саме він, а `appVersion` лише показується в `helm list`.
+
+Отже, один і той самий чарт 0.1.1 може розгорнути застосунок 1.0.0 або 1.1.0, а нова версія застосунку не вимагає обов'язкової зміни чарта.
+
+### Встановлення
+
+Образи `farm-association:1.0.0` і `farm-association:1.1.0` мають бути завантажені в minikube (див. розділ вище).
+
+```bash
+# перевірка чарта
+helm lint helm/farm-association
+
+# середовище розробки
+helm install farm helm/farm-association -n farm-helm --create-namespace \
+  -f helm/farm-association/values-dev.yaml
+
+# продакшн-середовище
+helm install farm helm/farm-association -n farm-helm --create-namespace \
+  -f helm/farm-association/values-prod.yaml \
+  --set secret.pgPassword=<пароль> --set secret.secretKey=<ключ>
+
+# перегляд маніфестів без встановлення
+helm template farm helm/farm-association -f helm/farm-association/values-prod.yaml
+```
+
+Керування релізом:
+
+```bash
+helm list -n farm-helm
+helm status farm -n farm-helm
+helm get values farm -n farm-helm
+helm upgrade farm helm/farm-association -n farm-helm -f helm/farm-association/values-dev.yaml --set image.tag=1.0.0
+helm history farm -n farm-helm
+helm rollback farm <ревізія> -n farm-helm
+helm test farm -n farm-helm
+helm uninstall farm -n farm-helm
+```
+
+### Пріоритет значень
+
+Helm об'єднує значення в такому порядку, і кожне наступне джерело перекриває попереднє:
+
+1. `values.yaml` у чарті (найнижчий пріоритет);
+2. файли `-f`/`--values` у порядку, в якому їх передано (наступний файл перекриває попередній);
+3. прапорці `--set`, `--set-string`, `--set-file` (найвищий пріоритет).
+
+Наприклад, у команді `-f values-dev.yaml --set image.tag=1.0.0` тег береться з `--set` (1.0.0), а не з values-dev.yaml (1.1.0). Решта значень береться з values-dev.yaml, а те, чого немає в ньому, — з values.yaml.
+
+### Параметри values
+
+| Параметр | За замовчуванням | dev | prod | Опис |
+| --- | --- | --- | --- | --- |
+| `replicaCount` | `1` | `1` | `3` | кількість реплік застосунку |
+| `image.repository` | `farm-association` | | | репозиторій образу |
+| `image.tag` | `1.0.0` | `1.1.0` | `1.0.0` | тег образу; якщо порожній — `appVersion` |
+| `image.pullPolicy` | `IfNotPresent` | | | політика завантаження образу |
+| `service.type` | `ClusterIP` | | | тип Service |
+| `service.port` | `80` | | | порт Service |
+| `service.targetPort` | `5000` | | | порт контейнера |
+| `resources.requests` | `100m` / `128Mi` | `100m` / `128Mi` | `250m` / `256Mi` | гарантовані ресурси |
+| `resources.limits` | `500m` / `256Mi` | `500m` / `256Mi` | `1` / `512Mi` | граничні ресурси |
+| `probes.path` | `/health` | | | шлях readiness- і liveness-проб |
+| `config.pgHost` | порожньо | | | хост БД; порожньо — Service бази цього релізу |
+| `config.pgPort` | `5432` | | | порт БД |
+| `config.pgDatabase` | `farm_db` | | | назва бази даних |
+| `config.pgUser` | `postgres` | | | користувач БД |
+| `secret.pgPassword` | навчальне значення | | передавати через `--set` | пароль БД (у Secret) |
+| `secret.secretKey` | навчальне значення | | передавати через `--set` | ключ Flask (у Secret) |
+| `ingress.enabled` | `false` | `false` | `true` | створювати Ingress |
+| `ingress.className` | `nginx` | | `nginx` | клас Ingress |
+| `ingress.host` | `farm-dev.local` | | `farm.local` | доменне ім'я |
+| `rollingUpdate.maxUnavailable` | `0` | | | стратегія оновлення |
+| `rollingUpdate.maxSurge` | `1` | | | стратегія оновлення |
+| `postgres.image` | `postgres:15-alpine` | | | образ PostgreSQL |
+| `postgres.persistence.enabled` | `true` | | | створювати PVC для БД |
+| `postgres.persistence.size` | `1Gi` | `1Gi` | | розмір PVC |
+| `hooks.preUpgrade.enabled` | `true` | | | хук перевірки БД перед оновленням |
+
+Порожня клітинка означає, що значення береться з `values.yaml`. Значення в Secret навчальні; реальні паролі у файлах значень не зберігаються і передаються через `--set`.
+
+### Хук і тест
+
+- `pre-upgrade-job.yaml` — Job з анотацією `helm.sh/hook: pre-upgrade`. Перед кожним `helm upgrade` він перевіряє, що база даних приймає з'єднання (`pg_isready`); якщо ні, оновлення не виконується.
+- `tests/test-health.yaml` — Pod з анотацією `helm.sh/hook: test`. Команда `helm test` запускає його, і він перевіряє, що Service застосунку відповідає на `/health` зі статусом `ok`.
+
+Обидва об'єкти мають політику `before-hook-creation,hook-succeeded`, тому після успішного виконання видаляються і не залишаються в namespace після `helm uninstall`.
