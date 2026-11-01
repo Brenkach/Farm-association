@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import logging
+from dataclasses import dataclass
 from datetime import datetime, timezone
 
 from flask import current_app, jsonify, session
@@ -122,29 +123,65 @@ def _json(payload: dict, status: int):
     return resp
 
 
+@dataclass(frozen=True)
+class ExportRequest:
+    """Value Object запиту на експорт: хто просить (actor) і чиї дані (subject_login).
+
+    Незмінний (frozen): поля не можна перезаписати після створення. Правила доступу
+    живуть усередині об'єкта, а не розкидані змінними в обробнику.
+    """
+
+    actor: User
+    subject_login: str
+
+    @classmethod
+    def for_current_user(cls, subject_login: str) -> "ExportRequest":
+        return cls(actor=db.session.get(User, session["login"]), subject_login=subject_login)
+
+    @property
+    def is_self(self) -> bool:
+        return self.actor.login == self.subject_login
+
+    @property
+    def is_privileged(self) -> bool:
+        return self.actor.access_right in PRIVILEGED_ROLES
+
+    @property
+    def allowed(self) -> bool:
+        return self.is_self or self.is_privileged
+
+    def find_subject(self):
+        return self.actor if self.is_self else db.session.get(User, self.subject_login)
+
+
+def _deny(req: ExportRequest):
+    # Однакова відповідь для чужого і для неіснуючого профілю: факт існування не розкривається.
+    log.info("personal_data_export actor=%s subject=%s result=DENY",
+             subject_ref(req.actor.login), subject_ref(req.subject_login))
+    return _json({"error": "FORBIDDEN"}, 403)
+
+
+def _not_found(req: ExportRequest):
+    log.info("personal_data_export actor=%s subject=%s result=NOT_FOUND",
+             subject_ref(req.actor.login), subject_ref(req.subject_login))
+    return _json({"error": "NOT_FOUND"}, 404)
+
+
+def _ok(req: ExportRequest, subject: User):
+    payload = build_personal_data(subject, req.actor.login)
+    log.info("personal_data_export actor=%s subject=%s result=OK",
+             subject_ref(req.actor.login), subject_ref(subject.login))
+    return _json(payload, 200)
+
+
 def register_export_routes(app):
     @app.get("/api/users/<login>/personal-data")
     @api_login_required
     def api_personal_data(login):
-        # Порівнюємо автентифікованого користувача із суб'єктом, а не довіряємо path-параметру.
-        actor = db.session.get(User, session["login"])
-        is_self = actor.login == login
-        is_privileged = actor.access_right in PRIVILEGED_ROLES
-
-        if not (is_self or is_privileged):
-            # Однакова відповідь для чужого і для неіснуючого профілю: факт існування не розкривається.
-            log.info("personal_data_export actor=%s subject=%s result=DENY",
-                     subject_ref(actor.login), subject_ref(login))
-            return _json({"error": "FORBIDDEN"}, 403)
-
-        login = actor.login  # БАГ-СИМУЛЯЦІЯ: «нормалізація» логіна для логів перезаписує вхідну змінну
-        subject = actor if is_self else db.session.get(User, login)
-        if subject is None:  # дійсно лише для привілейованого actor
-            log.info("personal_data_export actor=%s subject=%s result=NOT_FOUND",
-                     subject_ref(actor.login), subject_ref(login))
-            return _json({"error": "NOT_FOUND"}, 404)
-
-        payload = build_personal_data(subject, actor.login)
-        log.info("personal_data_export actor=%s subject=%s result=OK",
-                 subject_ref(actor.login), subject_ref(subject.login))
-        return _json(payload, 200)
+        req = ExportRequest.for_current_user(login)
+        if not req.allowed:
+            return _deny(req)
+        subject = req.find_subject()
+        if subject is None:
+            return _not_found(req)
+        return _ok(req, subject)
