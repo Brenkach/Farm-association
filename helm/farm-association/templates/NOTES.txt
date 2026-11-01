@@ -1,0 +1,18 @@
+Реліз {{ .Release.Name }} встановлено в namespace {{ .Release.Namespace }}.
+Образ застосунку: {{ include "farm.image" . }}, реплік: {{ .Values.replicaCount }}.
+
+Перевірити стан подів:
+  kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+Як відкрити застосунок:
+{{- if .Values.ingress.enabled }}
+  1. В окремому терміналі запустіть: minikube tunnel
+  2. Додайте в /etc/hosts рядок: 127.0.0.1 {{ .Values.ingress.host }}
+  3. Відкрийте http://{{ .Values.ingress.host }}
+     (або: curl -H "Host: {{ .Values.ingress.host }}" http://127.0.0.1/health)
+{{- else }}
+  1. kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "farm.fullname" . }} 8080:{{ .Values.service.port }}
+  2. Відкрийте http://localhost:8080
+{{- end }}
+
+Перевірити реліз: helm test {{ .Release.Name }} -n {{ .Release.Namespace }}

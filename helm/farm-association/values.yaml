@@ -1,0 +1,72 @@
+# Значення за замовчуванням відповідають середовищу розробки (dev).
+
+replicaCount: 1
+
+image:
+  repository: farm-association
+  # якщо порожньо — береться appVersion з Chart.yaml
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 5000
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+probes:
+  path: /health
+  readinessInitialDelay: 5
+  livenessInitialDelay: 15
+
+# параметри застосунку -> ConfigMap
+config:
+  pgPort: "5432"
+  pgDatabase: farm_db
+  pgUser: postgres
+  # порожньо -> ім'я Service бази цього релізу
+  pgHost: ""
+
+# чутливі параметри -> Secret
+# навчальні значення; для реального середовища передавайте через --set
+secret:
+  pgPassword: "dev-lab-password"
+  secretKey: "dev-lab-secret-key"
+
+ingress:
+  enabled: false
+  className: nginx
+  host: farm-dev.local
+
+rollingUpdate:
+  maxUnavailable: 0
+  maxSurge: 1
+
+postgres:
+  image: postgres:15-alpine
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  persistence:
+    enabled: true
+    size: 1Gi
+    storageClass: ""
+
+# хук pre-upgrade: перевірка доступності БД перед оновленням
+hooks:
+  preUpgrade:
+    enabled: true

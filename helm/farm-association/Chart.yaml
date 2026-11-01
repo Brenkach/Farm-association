@@ -1,0 +1,8 @@
+apiVersion: v2
+name: farm-association
+description: Веб-застосунок Асоціації фермерських господарств (Flask + PostgreSQL)
+type: application
+# версія самого чарта (шаблонів і values)
+version: 0.1.1
+# версія застосунку, яку чарт розгортає за замовчуванням
+appVersion: "1.0.0"

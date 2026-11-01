@@ -1,95 +1,47 @@
-# Farm-association
+# Документація проєкту «Сусід»
 
-Веб-застосунок на Flask + PostgreSQL.
+Веб-платформа локальних послуг із районним рейтингом довіри, стійким до накрутки відгуків.
 
-## Розгортання в Kubernetes (minikube)
+## Навігація
 
-Маніфести лежать у каталозі `k8s/`, по одному файлу на об'єкт. Номер у назві файлу задає порядок створення.
+| Документ | Опис |
+|---|---|
+| [Розділ 1 (локальний .docx)](./F2_Diploma_Chapter1_Brenkach.docx) | Аналіз предметної області та постановка задачі |
+| Розділ 1 (хмарний файл, режим «Can comment») | ВСТАВИТИ_ПОСИЛАННЯ_НА_GOOGLE_DOCS |
+| [1_analysis.md](./1_analysis.md) | Аналіз аналогів, модель To-Be, Core Features, NFRs у Markdown |
 
-| Файл | Об'єкт |
-| --- | --- |
-| `00-namespace.yaml` | Namespace `farm-association` |
-| `01-configmap.yaml` | ConfigMap `farm-config` |
-| `02-secret.yaml` | Secret `farm-secret` |
-| `03-postgres-pvc.yaml` | PersistentVolumeClaim `postgres-data` (1 Gi) |
-| `04-postgres-deployment.yaml` | Deployment `postgres` |
-| `05-postgres-service.yaml` | Service `postgres` (ClusterIP, 5432) |
-| `06-app-deployment.yaml` | Deployment `farm-web` (2 репліки, проби, ліміти) |
-| `07-app-service.yaml` | Service `farm-web` (ClusterIP, 80 → 5000) |
-| `08-ingress.yaml` | Ingress `farm-web` (host `farm.local`) |
+## Матриця нефункціональних вимог (NFRs)
 
-### Порядок розгортання
+Цільовий вузол: 4 vCPU, 8 ГБ RAM, SSD, Docker Compose. Навантаження вимірюється засобом k6. Значення є цільовими й підлягають верифікації у Розділі 3.
 
-1. Запустити кластер і увімкнути доповнення:
+| ID | Категорія | Вимога | Метод перевірки |
+|---|---|---|---|
+| NFR-P1 | Продуктивність | Запит каталогу (кешований у Redis): Latency p95 ≤ 200 мс при 200 RPS протягом 10 хв | k6, сценарій навантаження |
+| NFR-P2 | Продуктивність | Пошук за текстовим запитом (pg_trgm, без кешу): Latency p95 ≤ 400 мс при 50 RPS | k6 |
+| NFR-P3 | Продуктивність | Операції запису (створення замовлення, зміна статусу): Latency p95 ≤ 500 мс при 20 RPS | k6 |
+| NFR-P4 | Продуктивність | Частка відповідей 5xx < 1 % під час усіх навантажувальних сценаріїв | k6, Prometheus |
+| NFR-A1 | Асинхронність | Затримка від фіксації транзакції до появи події в черзі (Outbox lag): p95 ≤ 5 с | Метрика Prometheus |
+| NFR-A2 | Асинхронність | Оновлення рейтингу після підтвердження замовлення: p95 ≤ 30 с | Інтеграційний тест, метрика |
+| NFR-A3 | Асинхронність | Аналіз однієї фотографії ≤ 60 с на CPU вузла; виконання не збільшує Latency p95 API більше ніж на 10 % | k6 з паралельним аналізом |
+| NFR-A4 | Надійність подій | Втрата подій = 0 при примусовому перезапуску Redis і воркера; семантика «щонайменше один раз», ідемпотентні споживачі | Інтеграційний тест відмов |
+| NFR-S1 | Масштабованість | Підтримка 10 000 користувачів, 2 000 майстрів, 100 000 відгуків на одному вузлі; перерахунок графових ознак для 100 000 ребер ≤ 60 с | Генератор даних, замір часу |
+| NFR-SEC1 | Безпека | Паролі зберігаються як хеші Argon2id; токени JWT підписуються RS256, TTL access-токена 15 хв, refresh-токена 7 діб з ротацією | Огляд конфігурації, pytest |
+| NFR-SEC2 | Безпека | Перевірка прав доступу на 100 % захищених ендпоінтів (OWASP A01), підтверджена негативними тестами авторизації | pytest |
+| NFR-SEC3 | Безпека | Передача даних лише через TLS 1.2+ (Nginx); обмеження частоти запитів 100 запитів/хв на IP для публічних ендпоінтів | Тест конфігурації |
+| NFR-SEC4 | Безпека | Образи Docker без вразливостей рівня CRITICAL за результатами Trivy (умова проходження CI) | Trivy у GitHub Actions |
+| NFR-SEC5 | Комплаєнс | Видалення EXIF із завантажених фото; строк зберігання фото ≤ 180 діб; анонімізація персональних даних при видаленні акаунта ≤ 30 діб (принципи GDPR ст. 5, 17) | pytest, огляд задач очищення |
+| NFR-R1 | Надійність | RPO ≤ 15 хв (архівування WAL), RTO ≤ 60 хв; щоденне повне резервне копіювання, зберігання 7 копій | Тест відновлення |
+| NFR-R2 | Надійність | Запуск усієї системи однією командою `docker compose up`; автоматичний перезапуск контейнерів, перевірки стану (healthcheck) | Огляд конфігурації |
+| NFR-R3 | Ізоляція відмов | Недоступність Telegram API не збільшує Latency p95 основного API більше ніж на 10 % | Тест із відключенням Telegram |
+| NFR-Q1 | Супроводжуваність | Покриття тестами (pytest-cov): модулі рейтингу та автомата замовлень ≥ 85 %, загальне ≥ 70 % | pytest-cov |
+| NFR-Q2 | Супроводжуваність | SonarQube Quality Gate: 0 Blocker/Critical, дублювання коду < 3 % | SonarQube |
+| NFR-Q3 | Супроводжуваність | 100 % ендпоінтів REST API описано специфікацією OpenAPI 3.x | Flask-Smorest, валідація схеми |
+| NFR-O1 | Спостережуваність | Метрики Prometheus (histogram Latency, довжина черг, Outbox lag), дашборд Grafana; сповіщення при Outbox lag > 60 с | Prometheus, Grafana |
+| NFR-M1 | Якість алгоритмів | Виявлення накруток на синтетичному датасеті: precision ≥ 0.80, recall ≥ 0.70, у тому числі на накрутках з параметрами, не використаними при навчанні | scikit-learn, оцінка метрик |
+| NFR-M2 | Якість алгоритмів | Класифікація типу несправності за фото на тестовому наборі з 30-50 зображень: top-1 accuracy ≥ 0.60, top-3 accuracy ≥ 0.80 | Експеримент з еталонною розміткою |
 
-   ```bash
-   minikube start --driver=docker
-   minikube addons enable metrics-server
-   minikube addons enable ingress
-   ```
+## Ключові архітектурні обмеження
 
-2. Зібрати образи застосунку і завантажити їх у minikube (тег `latest` не використовується):
-
-   ```bash
-   docker build --load -t farm-association:1.0.0 .
-   minikube image load farm-association:1.0.0
-   ```
-
-   Версія 1.1.0 збирається так само після зміни `APP_VERSION` в `app.py`.
-
-3. Застосувати всі маніфести однією командою:
-
-   ```bash
-   kubectl apply -f k8s/
-   kubectl get pods -n farm-association -w
-   ```
-
-4. Відкрити доступ із хоста. В окремому терміналі запустити тунель і не закривати його:
-
-   ```bash
-   minikube tunnel
-   ```
-
-   Додати домен у `/etc/hosts`:
-
-   ```bash
-   echo "127.0.0.1 farm.local" | sudo tee -a /etc/hosts
-   ```
-
-   Застосунок доступний за адресою http://farm.local, перевірка стану — http://farm.local/health.
-
-### Параметри конфігурації
-
-**ConfigMap `farm-config`** (передається в контейнер як змінні оточення):
-
-| Параметр | Значення | Призначення |
-| --- | --- | --- |
-| `PG_HOST` | `postgres` | ім'я Service бази даних |
-| `PG_PORT` | `5432` | порт PostgreSQL |
-| `PG_DATABASE` | `farm_db` | назва бази даних |
-| `PG_USER` | `postgres` | користувач бази даних |
-
-**Secret `farm-secret`** (передається як змінні оточення):
-
-| Параметр | Призначення |
-| --- | --- |
-| `PG_PASSWORD` | пароль користувача PostgreSQL (також використовується контейнером `postgres`) |
-| `SECRET_KEY` | секретний ключ Flask для підпису сесій |
-
-Значення в Secret навчальні й не збігаються з паролями реальних систем.
-
-### Корисні команди
-
-```bash
-# стан об'єктів
-kubectl get pods,deploy,rs,svc,ingress,pvc -n farm-association
-
-# оновлення версії та відкат
-kubectl set image deployment/farm-web web=farm-association:1.1.0 -n farm-association
-kubectl rollout status deployment/farm-web -n farm-association
-kubectl rollout history deployment/farm-web -n farm-association
-kubectl rollout undo deployment/farm-web -n farm-association
-
-# видалення всього
-kubectl delete -f k8s/
-```
+- Модульний моноліт на Python/Flask, PostgreSQL як єдине джерело істини.
+- Transactional Outbox, асинхронні воркери Celery з брокером Redis.
+- Масштабування вертикальне в межах одного вузла (визнане обмеження).

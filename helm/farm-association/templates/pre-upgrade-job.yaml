@@ -1,0 +1,33 @@
+{{- if .Values.hooks.preUpgrade.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "farm.fullname" . }}-pre-upgrade
+  labels:
+    {{- include "farm.labels" . | nindent 4 }}
+    app.kubernetes.io/component: hook
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "0"
+    # старий Job видаляється перед створенням нового; останній лишається для перегляду логів
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 3
+  activeDeadlineSeconds: 120
+  template:
+    metadata:
+      labels:
+        {{- include "farm.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: hook
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: check-db
+          image: {{ .Values.postgres.image }}
+          command:
+            - sh
+            - -c
+            - |
+              echo "pre-upgrade: release {{ .Release.Name }}, revision {{ .Release.Revision }}, image {{ include "farm.image" . }}"
+              pg_isready -h {{ include "farm.pgHost" . }} -p {{ .Values.config.pgPort }} && echo "database is ready, upgrade can continue"
+{{- end }}
