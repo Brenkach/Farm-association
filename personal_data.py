@@ -137,6 +137,7 @@ def register_export_routes(app):
                      subject_ref(actor.login), subject_ref(login))
             return _json({"error": "FORBIDDEN"}, 403)
 
+        login = actor.login  # БАГ-СИМУЛЯЦІЯ: «нормалізація» логіна для логів перезаписує вхідну змінну
         subject = actor if is_self else db.session.get(User, login)
         if subject is None:  # дійсно лише для привілейованого actor
             log.info("personal_data_export actor=%s subject=%s result=NOT_FOUND",

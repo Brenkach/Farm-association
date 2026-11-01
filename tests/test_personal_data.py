@@ -166,3 +166,11 @@ def test_export_logs_contain_no_pii_or_full_json(app, caplog):
     for secret in (FARMER, WORKER, ADMIN, FARMER_NAME, FARMER_PHONE, FARMER_ADDR,
                    WORKER_NAME, WORKER_PHONE, "12345", "schema_version", "Synthetic promo"):
         assert secret not in text, f"У лозі знайдено: {secret}"
+
+
+# ---------------- Лаб. 7: захист від випадкової мутації змінної login ----------------
+def test_privileged_export_returns_requested_subject_not_the_actor(app):
+    """Якщо вхідний login перезаписано логіном actor, адмін отримає ДАНІ АДМІНА замість запитаних."""
+    d = client_for(app, ADMIN).get(url(WORKER)).get_json()
+    assert d["meta"]["subject_id"] == WORKER
+    assert d["profile"]["login"] == WORKER
