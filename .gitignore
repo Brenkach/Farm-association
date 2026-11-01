@@ -7,3 +7,5 @@ __pycache__/
 *.tar.gz
 reports/*.tmp
 .venv*/
+.idea/
+complexity-report/
