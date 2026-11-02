@@ -16,3 +16,4 @@ PRICES = {                                # (регіон, номер діапа
 def shipping_cost(region, weight, express):
     price = PRICES.get((region, bisect_left(WEIGHT_LIMITS, weight)))
     return price and price * EXPRESS_FACTOR[bool(express)]
+# lookup table version
