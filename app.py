@@ -68,7 +68,7 @@ def create_app():
 
 app = create_app()
 
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.3.0"
 
 
 @app.get("/health")
