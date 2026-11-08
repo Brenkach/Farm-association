@@ -1,0 +1,1 @@
+{"component":{"key":"farm-association","name":"Farm-association","qualifier":"TRK","measures":[{"metric":"complexity","value":"374"},{"metric":"functions","value":"111"},{"metric":"cognitive_complexity","value":"513","bestValue":false},{"metric":"classes","value":"24"},{"metric":"ncloc","value":"2058"},{"metric":"files","value":"14"}]}}
