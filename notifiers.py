@@ -1,8 +1,9 @@
-"""Ієрархія сервісів сповіщень (Лаб. 8, Завдання 3): три рівні успадкування.
+"""Сервіси сповіщень (Лаб. 8, Завдання 3): композиція замість успадкування (Replace Inheritance with Composition).
 
-BaseNotifier  ->  ConsentAwareNotifier  ->  CampaignNotifier
-Нащадки перевизначають методи предків, частково переписуючи їхню логіку, тому будь-яка зміна
-в базовому класі «простріляє» усю ланцюжок (Inheritance Hell).
+CampaignNotifier  --містить-->  ConsentAwareNotifier  --містить-->  BaseNotifier
+Жодного ключового слова наслідування: попередній «предок» став приватним полем _inner, який
+передається через конструктор (Dependency Injection), а нащадок лише делегує йому виклики.
+Сигнатуру BaseNotifier.build_message знає лише один виклик у ConsentAwareNotifier.send().
 """
 from __future__ import annotations
 
@@ -55,35 +56,28 @@ class BaseNotifier:
         return f"SENT to={message['to']} ch={message['channel']}"
 
 
-class ConsentAwareNotifier(BaseNotifier):
-    """Рівень 2: надсилає лише за згодою та поважає список блокувань."""
+class ConsentAwareNotifier:
+    """Рівень 2 (композиція): надсилає лише за згодою та поважає список блокувань."""
 
-    def __init__(self, consents: dict | None = None, limit: int = 200):
-        super().__init__(limit)
+    def __init__(self, inner: BaseNotifier, consents: dict | None = None):
+        self._inner = inner
         self._consents = consents if consents is not None else {}
         self._blocked: set = set()
-
-    # --- перевизначені методи предка ---
-    def validate(self, text: str) -> bool:
-        # логіку предка переписано повністю, замість виклику super()
-        return bool(text) and len(text) <= self._limit and "STOP" not in text.upper()
-
-    def build_message(self, login: str, text: str) -> dict:
-        message = super().build_message(login, text)
-        message["consent"] = self.check_consent(login)
-        return message
-
-    def render(self, message: dict) -> str:
-        return super().render(message) + (" (consented)" if message.get("consent") else " (no consent)")
 
     def send(self, login: str, text: str) -> dict:
         if login in self._blocked:
             return {"ok": False, "reason": "BLOCKED"}
         if not self.check_consent(login):
             return {"ok": False, "reason": "NO_CONSENT"}
-        return super().send(login, text)
+        text = self._inner.normalize(text)
+        if not (self._inner.validate(text) and "STOP" not in text.upper()):
+            return {"ok": False, "reason": "INVALID"}
+        message = self._inner.build_message(login, text, channel=self._inner.channel)
+        message["consent"] = self.check_consent(login)
+        self._inner.deliver(message)
+        suffix = " (consented)" if message["consent"] else " (no consent)"
+        return {"ok": True, "rendered": self._inner.render(message) + suffix}
 
-    # --- нові методи ---
     def check_consent(self, login: str) -> bool:
         return bool(self._consents.get(login))
 
@@ -99,38 +93,43 @@ class ConsentAwareNotifier(BaseNotifier):
     def list_blocked(self) -> list:
         return sorted(self._blocked)
 
+    def history(self) -> list:
+        return self._inner.history()
 
-class CampaignNotifier(ConsentAwareNotifier):
-    """Рівень 3: кампанії, шаблони та відкладена розсилка."""
+    def stats(self) -> dict:
+        return self._inner.stats()
 
-    def __init__(self, consents: dict | None = None, limit: int = 200, templates: dict | None = None):
-        super().__init__(consents, limit)
+    def audit_line(self, message: dict) -> str:
+        return self._inner.audit_line(message)
+
+
+class CampaignNotifier:
+    """Рівень 3 (композиція): кампанії, шаблони та відкладена розсилка."""
+
+    def __init__(self, inner: ConsentAwareNotifier, templates: dict | None = None):
+        self._inner = inner
         self._templates = dict(templates or {"default": "{text}"})
         self._scheduled: list = []
         self._cancelled: set = set()
 
-    # --- перевизначені методи предків ---
-    def normalize(self, text: str) -> str:
-        # логіку предка переписано повністю, замість виклику super()
-        return " ".join(text.split()).strip().capitalize()
-
-    def render(self, message: dict) -> str:
-        return super().render(message).upper()
-
     def send(self, login: str, text: str) -> dict:
-        result = super().send(login, text)
+        result = self._inner.send(login, " ".join(text.split()).strip().capitalize())
+        if result["ok"]:
+            result["rendered"] = result["rendered"].upper()
         result["campaign"] = True
         return result
 
     def stats(self) -> dict:
-        data = super().stats()
+        data = self._inner.stats()
         data["scheduled"] = len(self._scheduled)
         return data
 
     def audit_line(self, message: dict) -> str:
-        return super().audit_line(message) + " campaign=1"
+        return self._inner.audit_line(message) + " campaign=1"
 
-    # --- нові методи ---
+    def history(self) -> list:
+        return self._inner.history()
+
     def set_template(self, name: str, template: str) -> None:
         self._templates[name] = template
 
