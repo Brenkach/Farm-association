@@ -12,7 +12,7 @@ from personal_data import subject_ref
 class AuditTrail:
     """Єдина точка запису подій аудиту в базу."""
 
-    def record(self, subject: str, event_type: str, result: str) -> None:
+    def record(self, subject: str, event_type: str, result: str, *, actor: str) -> None:
         db.session.add(AuditEvent(event_type=event_type, subject_ref=subject_ref(subject),
-                                  actor_ref="SYSTEM", result=result))
+                                  actor_ref=subject_ref(actor), result=result))
         db.session.commit()
