@@ -22,8 +22,8 @@ class BaseNotifier:
     def validate(self, text: str) -> bool:
         return bool(text) and len(text) <= self._limit
 
-    def build_message(self, login: str, text: str) -> dict:
-        return {"to": login, "text": text, "channel": self.channel}
+    def build_message(self, login: str, text: str, *, channel: str) -> dict:
+        return {"to": login, "text": text, "channel": channel}
 
     def render(self, message: dict) -> str:
         return f"[{message['channel']}] {message['to']}: {message['text']}"
@@ -35,7 +35,7 @@ class BaseNotifier:
         text = self.normalize(text)
         if not self.validate(text):
             return {"ok": False, "reason": "INVALID"}
-        message = self.build_message(login, text)
+        message = self.build_message(login, text, channel=self.channel)
         self.deliver(message)
         return {"ok": True, "rendered": self.render(message)}
 
