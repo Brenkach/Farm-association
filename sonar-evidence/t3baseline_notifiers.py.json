@@ -1,0 +1,1 @@
+{"component":{"key":"farm-association:notifiers.py","name":"notifiers.py","qualifier":"FIL","path":"notifiers.py","language":"py","measures":[{"metric":"complexity","value":"44"},{"metric":"functions","value":"34"},{"metric":"cognitive_complexity","value":"8","bestValue":false},{"metric":"classes","value":"3"},{"metric":"ncloc","value":"97"}]}}
