@@ -1,0 +1,1 @@
+{"component":{"key":"farm-association:privacy_services.py","name":"privacy_services.py","qualifier":"FIL","path":"privacy_services.py","language":"py","measures":[{"metric":"complexity","value":"50"},{"metric":"functions","value":"25"},{"metric":"cognitive_complexity","value":"22","bestValue":false},{"metric":"classes","value":"14"},{"metric":"ncloc","value":"173"}]}}
