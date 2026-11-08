@@ -38,8 +38,10 @@ DEFAULT_EXCLUDE = ["tests/*", "experiments/*", "ci/*", "git-hooks/*", ".venv*", 
 
 # ----------------------------------------------------------------------------- допоміжні функції AST
 def tracked_python_files(exclude):
-    out = subprocess.run(["git", "ls-files", "*.py"], capture_output=True, text=True).stdout.split()
-    return [f for f in out if not any(fnmatch.fnmatch(f, p) for p in exclude)]
+    """Файли Git (відстежувані та нові, але не ігноровані) без виключень."""
+    cmd = ["git", "ls-files", "--cached", "--others", "--exclude-standard", "*.py"]
+    out = subprocess.run(cmd, capture_output=True, text=True).stdout.split()
+    return sorted({f for f in out if Path(f).exists() and not any(fnmatch.fnmatch(f, p) for p in exclude)})
 
 
 def is_dunder(name):
@@ -230,7 +232,7 @@ def class_row(name, info, hierarchy, project_names):
             "RFC": len(meths | called_names(node)), "DIT": hierarchy.dit(name),
             "NMA": len(meths - overridden - {"__init__"}), "NMO": len(overridden),
             "PIM": len(public | hierarchy.inherited_public(name)),
-            "_couplings": len(refs - set(base_names(node)))}
+            "_couplings": len(refs - set(base_names(node))), "_refs": sorted(refs)}
 
 
 # ----------------------------------------------------------------------------- MOOD
@@ -278,11 +280,24 @@ def print_mood(mood):
           f"   COF = {mood['COF_percent']} %  ({mood['couplings']} зв'язків із {tc * tc - tc} можливих)")
 
 
+def print_graph(rows, name):
+    """Граф залежностей класу у форматі Mermaid (епіцентр хаосу: клас і всі класи, на які він посилається)."""
+    row = next((r for r in rows if r["class"] == name), None)
+    if row is None:
+        print(f"\nКлас {name} не знайдено")
+        return
+    print(f"\n```mermaid\nflowchart LR\n    {name}[\"{name}<br/>CBO = {row['CBO']}\"]:::core")
+    for dep in row["_refs"]:
+        print(f"    {name} --> {dep}")
+    print("    classDef core fill:#fde2e2,stroke:#c0392b\n```")
+
+
 def parse_args():
     ap = argparse.ArgumentParser()
     ap.add_argument("--files", nargs="*", help="показати лише класи з цих файлів (MOOD рахується по всьому проєкту)")
     ap.add_argument("--exclude", nargs="*", default=DEFAULT_EXCLUDE)
     ap.add_argument("--json")
+    ap.add_argument("--graph", metavar="CLASS", help="надрукувати граф залежностей класу (Mermaid)")
     return ap.parse_args()
 
 
@@ -299,6 +314,8 @@ def main():
     print_table(shown)
     print_file_notes(a.files, parsed, rows)
     print_mood(mood)
+    if a.graph:
+        print_graph(rows, a.graph)
     if a.json:
         clean = [{k: v for k, v in r.items() if not k.startswith("_")} for r in rows]
         Path(a.json).write_text(json.dumps({"mood": mood, "classes": clean}, ensure_ascii=False, indent=2), encoding="utf-8")
