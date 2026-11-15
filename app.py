@@ -7,6 +7,7 @@ from sqlalchemy.engine import URL
 
 from extensions import db
 from models import Specialization, User
+from observability import init_observability
 from routes import register_routes
 
 load_dotenv()
@@ -68,7 +69,7 @@ def create_app():
 
 app = create_app()
 
-APP_VERSION = "1.3.0"
+APP_VERSION = "1.4.0"
 
 
 @app.get("/health")
@@ -78,3 +79,6 @@ def health():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
+init_observability(app, APP_VERSION)
