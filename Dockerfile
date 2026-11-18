@@ -8,7 +8,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --only-binary :all: --require-hashes -r requirements.txt
 RUN pip uninstall -y setuptools wheel
 # Копіюємо лише потрібні файли, а не весь контекст
-COPY app.py extensions.py models.py observability.py routes.py ./
+COPY app.py extensions.py models.py routes.py ./
 COPY templates/ templates/
 COPY static/ static/
 
