@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 import json
 
-from sqlalchemy import func
+from sqlalchemy import func, text
 
 from flask import request, redirect, url_for, render_template, session
 
@@ -161,6 +161,15 @@ FARM_EDIT_FLOW = {
 
 
 def register_routes(app):
+        # --- Health (readiness probe)
+        @app.get("/health")
+        def health():
+            try:
+                db.session.execute(text("SELECT 1"))
+            except Exception:
+                return {"status": "unavailable"}, 503
+            return {"status": "ok"}, 200
+
         # --- Manual
         @app.route("/manual")
         def manual():
