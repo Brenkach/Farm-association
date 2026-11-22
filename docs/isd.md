@@ -9,10 +9,10 @@
 ## 2. Топологія розгортання
 | Сервіс | Образ / збірка | Контейнер | Порт хоста → контейнера | Залежності |
 |---|---|---|---|---|
-| `db` | `postgres:15-alpine` | `farm_db` | 5433 → 5432 | том `postgres_data` |
-| `web` | `build: .` (`python:3.12-slim`, користувач `appuser`, не root) | `farm_web` | 5001 → 5000 | `depends_on: db` |
+| `db` | `postgres:15-alpine` | `farm_db` | 5433 → 5432 | том `postgres_data`, healthcheck `pg_isready` (інтервал 5 с, до 10 спроб) |
+| `web` | `build: .` (`python:3.12-slim`, користувач `appuser`, не root) | `farm_web` | 5002 → 5000 | `depends_on: db` з умовою `service_healthy` |
 
-Порядок запуску: `db` стартує першим, потім `web` (`depends_on` без перевірки готовності БД). Застосунок при старті виконує `db.create_all()` і створює користувача `admin`. Опис компонентів, що працюють усередині `web`: див. [SDD §3](sdd.md#3-компоненти-веб-застосунку).
+Порядок запуску: `db` стартує першим, `web` запускається лише після того, як healthcheck `db` став healthy (`depends_on: condition: service_healthy`). Застосунок при старті виконує `db.create_all()` і створює користувача `admin`. Опис компонентів, що працюють усередині `web`: див. [SDD §3](sdd.md#3-компоненти-веб-застосунку).
 
 ## 3. Середовища та змінні оточення
 | Середовище | Де працює | Як налаштовується |
@@ -38,7 +38,7 @@ PostgreSQL 15, база `farm_db`, постійний том `postgres_data` (`/
 | `.pre-commit-config.yaml` | кожен коміт | `gitleaks protect --staged` |
 
 ## 7. Моніторинг і логування
-Логи застосунку проходять через `privacy_logging`: маскування PII, correlation ID (`X-Correlation-ID`). Журнал `audit_events` зберігає факти операцій без персональних даних. Перегляд: `docker compose logs web`. Healthcheck не налаштовано (ризик R3).
+Логи застосунку проходять через `privacy_logging`: маскування PII, correlation ID (`X-Correlation-ID`). Журнал `audit_events` зберігає факти операцій без персональних даних. Перегляд: `docker compose logs web`. Готовність застосунку перевіряється ендпоінтом `GET /health` (200, якщо БД доступна, інакше 503); для БД налаштовано healthcheck у compose (ризик R3: директиви healthcheck для контейнера `web` немає).
 
 ## 8. Резервне копіювання та відновлення
 | Показник | Цільове значення |
@@ -52,4 +52,4 @@ PostgreSQL 15, база `farm_db`, постійний том `postgres_data` (`/
 `git checkout <попередній-тег>` → `docker compose up -d --build web`. Схема БД керується `create_all()` без міграцій, тому зміни схеми відкату не підлягають (ризик R4).
 
 ## 10. Реєстр ризиків
-R1: немає автоматичного бекапу · R2: пароль БД літералом у dev-compose · R3: немає healthcheck · R4: немає міграцій схеми.
+R1: немає автоматичного бекапу · R2: пароль БД літералом у dev-compose · R3: немає healthcheck контейнера web · R4: немає міграцій схеми.

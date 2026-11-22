@@ -6,7 +6,7 @@
 
 1. `cp .env.example .env` і заповніть значення (`SECRET_KEY`, `ADMIN_PASSWORD`, змінні `PG_*`). Файл `.env` не потрапляє в Git.
 2. `docker compose up --build`
-3. Відкрийте http://localhost:5001 і увійдіть як `admin` з паролем `ADMIN_PASSWORD`.
+3. Сервіс `web` чекає, поки БД стане healthy. Перевірте готовність: http://localhost:5002/health (відповідь `{"status": "ok"}`), потім відкрийте http://localhost:5002 і увійдіть як `admin` з паролем `ADMIN_PASSWORD`.
 4. Тести: `pytest tests/ -v`
 
 ## Онбординг нового розробника

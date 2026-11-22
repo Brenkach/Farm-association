@@ -16,7 +16,7 @@ C4Container
     Container(web, "Flask web-застосунок", "Python 3.12, Flask, Flask-SQLAlchemy", "HTML-сторінки (Jinja2) і JSON API приватності")
     ContainerDb(db, "PostgreSQL 15", "postgres:15-alpine, том postgres_data", "Усі бізнес-дані, згоди, аудит")
   }
-  Rel(user, web, "HTTP, порт 5001 (зовні)", "HTML, JSON")
+  Rel(user, web, "HTTP, порт 5002 (зовні)", "HTML, JSON")
   Rel(web, db, "SQL через pg8000", "TCP 5432 у мережі compose")
 ```
 
@@ -42,7 +42,7 @@ flowchart LR
 | Компонент | Файл | Відповідальність | Взаємодіє з | Розгортання (ISD) |
 |---|---|---|---|---|
 | Фабрика застосунку | `app.py` | Конфігурація Flask, підключення БД, `db.create_all()`, створення користувача `admin`, засів довідника спеціалізацій, реєстрація маршрутів | routes, consent, personal_data, anonymization, privacy_logging, models | [ISD §3, §4](isd.md#3-середовища-та-змінні-оточення) |
-| Сторінки | `routes.py` | Автентифікація (login, register, reset-password), CRUD господарств, типів продукції, пропозицій, працівників, звіт виробників | models, services, farm_rules | [ISD §2](isd.md#2-топологія-розгортання) |
+| Сторінки | `routes.py` | Автентифікація (login, register, reset-password), CRUD господарств, типів продукції, пропозицій, працівників, звіт виробників, перевірка готовності (`/health`) | models, services, farm_rules | [ISD §2](isd.md#2-топологія-розгортання) |
 | Сервіс пропозицій | `services.py` | `OffersService`: логіка пропозицій з повтором при збої БД | models | [ISD §2](isd.md#2-топологія-розгортання) |
 | Правила форми | `farm_rules.py` | Таблиця правил валідації господарства (`RULES`, `first_error`) | routes | [ISD §2](isd.md#2-топологія-розгортання) |
 | Згоди | `consent.py` | `UserConsent`, `ConsentHistory`, `MarketingOutbox`, `ConsentPolicyGate`, API `/api/consents*` | models | [ISD §5](isd.md#5-сховища-даних) |
@@ -78,6 +78,7 @@ erDiagram
 |---|---|---|---|
 | GET/POST `/login`, GET `/logout`, GET/POST `/register`, GET/POST `/reset-password` | routes | гість | автентифікація |
 | GET `/`, GET `/manual`, GET `/forbidden` | routes | сесія | головна, інструкція, відмова |
+| GET `/health` | routes | відкритий | перевірка готовності: 200 `{"status": "ok"}`, 503 `{"status": "unavailable"}` при недоступній БД |
 | GET/POST `/farms`, GET/POST `/farms/<id>/edit`, GET `/farms/<id>/delete` | routes | за роллю | господарства |
 | GET/POST `/product-types`, `/product-types/<id>/attributes`, `/product-types/<id>/edit`, GET `/product-types/<id>/delete`, GET `/attribute/<id>/delete` | routes | за роллю | типи продукції й атрибути |
 | GET/POST `/offers`, `/offers/<id>/edit`, GET `/offers/<id>/delete` | routes, services | за роллю | пропозиції |
