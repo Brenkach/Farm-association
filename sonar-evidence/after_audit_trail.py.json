@@ -1,0 +1,1 @@
+{"component":{"key":"farm-association:audit_trail.py","name":"audit_trail.py","qualifier":"FIL","path":"audit_trail.py","language":"py","measures":[{"metric":"complexity","value":"1"},{"metric":"functions","value":"1"},{"metric":"cognitive_complexity","value":"0","bestValue":true},{"metric":"classes","value":"1"},{"metric":"ncloc","value":"9"}]}}

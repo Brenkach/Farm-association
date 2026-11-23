@@ -1,0 +1,8 @@
+# Відомий технічний борг на момент Лаб. 6 (CC > 10).
+# Не блокує коміт; будь-яка НОВА функція з CC > 10 блокується.
+routes.py:register_routes.offers
+routes.py:register_routes.register
+routes.py:register_routes.report_producers
+privacy_logging.py:sanitize
+experiments/quality_gate.py:evaluate
+tests/test_farm_rules.py:oracle

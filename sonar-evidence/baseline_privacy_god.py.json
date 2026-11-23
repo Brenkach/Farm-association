@@ -1,0 +1,1 @@
+{"component":{"key":"farm-association:privacy_god.py","name":"privacy_god.py","qualifier":"FIL","path":"privacy_god.py","language":"py","measures":[{"metric":"complexity","value":"26"},{"metric":"functions","value":"9"},{"metric":"cognitive_complexity","value":"16","bestValue":false},{"metric":"classes","value":"1"},{"metric":"ncloc","value":"99"}]}}

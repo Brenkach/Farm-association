@@ -1,11 +1,12 @@
 from datetime import date, timedelta
 import json
 
-from sqlalchemy import func
+from sqlalchemy import func, text
 
 from flask import request, redirect, url_for, render_template, session
 
 from extensions import db, require_roles
+from farm_rules import first_error
 from models import (
         User,
         Specialization,
@@ -100,7 +101,75 @@ def _render_farms_page(msg):
 
 
 
+# ---------------------------------------------------------------------------
+# Data-driven редагування господарства: замість if/elif використано таблиці
+# (правила валідації див. farm_rules.py)
+# ---------------------------------------------------------------------------
+# Роль -> умова, за якої редагування заборонене
+_FORBIDDEN_FOR_ROLE = {
+    "farmer": lambda farm: session.get("farm_id") != farm.farm_id,
+}
+
+
+def _is_forbidden(farm):
+    deny = _FORBIDDEN_FOR_ROLE.get(session.get("access_right"), lambda _farm: False)
+    return deny(farm)
+
+
+def _redirect_forbidden(_farm):
+    return redirect(url_for("forbidden"))
+
+
+def _farm_edit_form(farm, msg=None):
+    specs = Specialization.query.order_by(Specialization.name).all()
+    return render_template("farm_edit.html", f=farm, specs=specs, msg=msg)
+
+
+def _farm_edit_get(farm):
+    return _farm_edit_form(farm)
+
+
+def _farm_edit_save(farm):
+    try:
+        farm.name = request.form["name"]
+        farm.specialization_id = int(request.form["specialization_id"])
+        farm.farmer_fullname = request.form.get("farmer_fullname")
+        farm.region = request.form.get("region")
+        farm.address = request.form.get("address")
+        farm.phone = request.form.get("phone", "").strip()
+        farm.permit_issued_at = date.fromisoformat(request.form["permit_issued_at"])
+        farm.permit_expires_at = date.fromisoformat(request.form["permit_expires_at"])
+        db.session.commit()
+        return redirect(url_for("farms"))
+    except Exception as e:
+        db.session.rollback()
+        return _farm_edit_form(farm, f"Помилка оновлення: {e}")
+
+
+def _farm_edit_post(farm):
+    error = first_error(request.form)
+    return _farm_edit_form(farm, error) if error else _farm_edit_save(farm)
+
+
+# (заборонено?, HTTP-метод) -> обробник
+FARM_EDIT_FLOW = {
+    (True, "GET"): _redirect_forbidden,
+    (True, "POST"): _redirect_forbidden,
+    (False, "GET"): _farm_edit_get,
+    (False, "POST"): _farm_edit_post,
+}
+
+
 def register_routes(app):
+        # --- Health (readiness probe)
+        @app.get("/health")
+        def health():
+            try:
+                db.session.execute(text("SELECT 1"))
+            except Exception:
+                return {"status": "unavailable"}, 503
+            return {"status": "ok"}, 200
+
         # --- Manual
         @app.route("/manual")
         def manual():
@@ -267,53 +336,8 @@ def register_routes(app):
         @app.route("/farms/<int:farm_id>/edit", methods=["GET", "POST"])
         @require_roles("superuser", "farmer")
         def edit_farm(farm_id):
-            f = Farm.query.get_or_404(farm_id)
-            role = session.get("access_right")
-            user_farm_id = session.get("farm_id")
-            msg = None
-
-            # фермер може редагувати тільки своє господарство
-            if role == "farmer" and user_farm_id != f.farm_id:
-                return redirect(url_for("forbidden"))
-
-            specs = Specialization.query.order_by(Specialization.name).all()
-
-            if request.method == "POST":
-                permit_issued = request.form.get("permit_issued_at")
-                permit_expires = request.form.get("permit_expires_at")
-                phone_val = request.form.get("phone", "").strip()
-
-                if not permit_issued or not permit_expires:
-                    msg = "Поля дат дозволу є обов'язковими!"
-                else:
-                    if phone_val and (len(phone_val) < 9 or len(phone_val) > 15):
-                        msg = "Телефон повинен містити лише цифри (9–15 символів)."
-
-                    if not msg:
-                        issued_dt = date.fromisoformat(permit_issued)
-                        expires_dt = date.fromisoformat(permit_expires)
-
-                        if expires_dt < issued_dt:
-                            msg = "Дата завершення дозволу не може бути раніше дати видачі!"
-
-                    if not msg:
-                        try:
-                            f.name = request.form["name"]
-                            f.specialization_id = int(request.form["specialization_id"])
-                            f.farmer_fullname = request.form.get("farmer_fullname")
-                            f.region = request.form.get("region")
-                            f.address = request.form.get("address")
-                            f.phone = phone_val
-                            f.permit_issued_at = issued_dt
-                            f.permit_expires_at = expires_dt
-
-                            db.session.commit()
-                            return redirect(url_for("farms"))
-                        except Exception as e:
-                            db.session.rollback()
-                            msg = f"Помилка оновлення: {e}"
-
-            return render_template("farm_edit.html", f=f, specs=specs, msg=msg)
+            farm = Farm.query.get_or_404(farm_id)
+            return FARM_EDIT_FLOW[(_is_forbidden(farm), request.method)](farm)
 
         # ---------------- DELETE FARM ----------------
 

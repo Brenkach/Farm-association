@@ -1,9 +1,11 @@
 import os
-
+from consent import register_consent_routes
+from personal_data import register_export_routes
+from anonymization import register_anonymization_routes
 from flask import Flask, session
 from sqlalchemy.engine import URL
 from dotenv import load_dotenv
-
+from privacy_logging import setup_privacy_logging
 from extensions import db
 from models import User, Specialization
 from routes import register_routes
@@ -14,6 +16,8 @@ load_dotenv()
 def create_app():
     app = Flask(__name__)
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "devkey")
+    setup_privacy_logging(app)
+
 
     db_url = URL.create(
         drivername="postgresql+pg8000",
@@ -40,8 +44,11 @@ def create_app():
 
         admin = db.session.get(User, "admin")
         if not admin:
+            admin_password = os.getenv("ADMIN_PASSWORD")
+            if not admin_password:
+                raise RuntimeError("ADMIN_PASSWORD не задано в .env")
             su = User(login="admin", access_right="superuser")
-            su.set_password("admin123")
+            su.set_password(admin_password)
             db.session.add(su)
             db.session.commit()
 
@@ -65,11 +72,13 @@ def create_app():
             db.session.commit()
 
     register_routes(app)
+    register_consent_routes(app)
+    register_export_routes(app)
+    register_anonymization_routes(app)
     return app
 
 
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(debug=True)
-
+    app.run(debug=os.getenv("FLASK_DEBUG") == "1")

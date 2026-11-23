@@ -1,0 +1,1 @@
+{"component":{"key":"farm-association:models.py","name":"models.py","qualifier":"FIL","path":"models.py","language":"py","measures":[{"metric":"complexity","value":"9"},{"metric":"functions","value":"4"},{"metric":"cognitive_complexity","value":"5","bestValue":false},{"metric":"classes","value":"8"},{"metric":"ncloc","value":"158"}]}}
