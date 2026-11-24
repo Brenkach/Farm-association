@@ -1,0 +1,13 @@
+services:
+  localstack:
+    container_name: localstack
+    # безкоштовна Community-версія, що працює без токена (новіші вимагають LOCALSTACK_AUTH_TOKEN)
+    image: localstack/localstack:4.12
+    ports:
+      - "127.0.0.1:4566:4566"   # єдина точка входу для всіх AWS API
+    environment:
+      - DEBUG=0
+    volumes:
+      # Lambda-функції LocalStack запускає в окремих Docker-контейнерах
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./.localstack:/var/lib/localstack

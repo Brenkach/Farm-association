@@ -1,0 +1,5 @@
+.env
+.localstack/
+build/
+.api-url
+__pycache__/
